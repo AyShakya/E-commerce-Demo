@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getCart, updateCartItem, removeCartItem } from "../../api/cart.api";
+import { CartPageSkeleton } from "../../components/PageSkeleton";
 
 export default function Cart() {
   const [cart, setCart] = useState([]);
@@ -50,11 +51,7 @@ export default function Cart() {
   );
 
   if (loading) {
-    return (
-      <div className="h-screen bg-[#080808] text-white flex items-center justify-center font-serif italic text-lg tracking-[0.2em] animate-pulse">
-        Accessing Bag...
-      </div>
-    );
+    return <CartPageSkeleton />;
   }
 
   return (

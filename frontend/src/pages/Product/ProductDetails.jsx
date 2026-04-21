@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { fetchProductById } from "../../api/product.api";
 import { addToCart } from "../../api/cart.api";
+import { ProductDetailsSkeleton } from "../../components/PageSkeleton";
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -35,11 +36,7 @@ export default function ProductDetails() {
     navigate("/checkout", { state: { productId: product._id, quantity } });
   };
 
-  if (loading) return (
-    <div className="h-screen bg-[#080808] text-white flex items-center justify-center font-serif italic text-lg tracking-[0.2em] animate-pulse">
-      Accessing Database...
-    </div>
-  );
+  if (loading) return <ProductDetailsSkeleton />;
 
   if (error) {
     return (

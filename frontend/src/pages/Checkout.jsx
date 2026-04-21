@@ -3,6 +3,7 @@ import { createPayment } from "../api/payment.api";
 import { fetchProductById } from "../api/product.api";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useState } from "react";
+import { CheckoutSkeleton } from "../components/PageSkeleton";
 
 export default function Checkout() {
   const { state } = useLocation();
@@ -59,11 +60,7 @@ export default function Checkout() {
   };
 
   if (loading || !product) {
-    return (
-      <div className="h-screen bg-[#080808] text-white flex items-center justify-center font-serif italic text-xl tracking-[0.2em] animate-pulse">
-        Finalizing Manifest...
-      </div>
-    );
+    return <CheckoutSkeleton />;
   }
 
   return (

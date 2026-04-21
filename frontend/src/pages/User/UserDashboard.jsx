@@ -10,22 +10,45 @@ const TABS = [
 ];
 
 export default function UserDashboard() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const [tab, setTab] = useState("profile");
   const [address, setAddress] = useState(user.address || {});
   const [message, setMessage] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const handleChange = (e) => {
-    setAddress({ ...address, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setAddress({ ...address, [name]: value });
+    if (fieldErrors[name]) {
+      setFieldErrors((prev) => ({ ...prev, [name]: false }));
+    }
   };
 
   const saveAddress = async () => {
+    const requiredFields = ["fullName", "phone", "line1", "city", "state", "postalCode"];
+    const missing = requiredFields.filter((key) => !String(address[key] || "").trim());
+
+    if (missing.length > 0) {
+      const uiErrors = Object.fromEntries(missing.map((field) => [field, true]));
+      setFieldErrors(uiErrors);
+      setMessage("Please complete highlighted fields");
+      return;
+    }
+
+    setFieldErrors({});
+
     try {
-      await api.put("/users/me/address", address);
+      const res = await api.put("/users/me/address", address);
+      updateUser({ address: res.data.address });
+      setAddress(res.data.address);
       setMessage("Ledger Synchronized");
       setTimeout(() => setMessage(""), 3000);
-    } catch {
-      setMessage("Sync Failed");
+    } catch (err) {
+      const invalidFields = err?.response?.data?.errors || [];
+      if (invalidFields.length) {
+        setFieldErrors(Object.fromEntries(invalidFields.map((field) => [field, true])));
+      }
+      setMessage(err?.response?.data?.message || "Sync Failed");
     }
   };
 
@@ -106,6 +129,7 @@ export default function UserDashboard() {
                   { label: "Address Line 1", name: "line1", span: true },
                   { label: "Address Line 2", name: "line2", span: true },
                   { label: "City / District", name: "city" },
+                  { label: "State / Region", name: "state" },
                   { label: "Postal Code", name: "postalCode" }
                 ].map((field) => (
                   <div key={field.name} className={`flex flex-col gap-4 ${field.span ? 'md:col-span-2' : ''}`}>
@@ -114,7 +138,7 @@ export default function UserDashboard() {
                       name={field.name}
                       value={address[field.name] || ""}
                       onChange={handleChange}
-                      className="bg-transparent border-b border-slate-200/10 py-3 text-base text-slate-100 focus:border-slate-200 outline-none transition-all duration-500 placeholder:text-slate-100/10 hover:border-slate-200/30 font-light tracking-wide w-full focus:pl-2"
+                      className={`bg-transparent border-b py-3 text-base text-slate-100 focus:border-slate-200 outline-none transition-all duration-500 placeholder:text-slate-100/10 font-light tracking-wide w-full focus:pl-2 ${fieldErrors[field.name] ? "border-red-400/60 hover:border-red-400" : "border-slate-200/10 hover:border-slate-200/30"}`}
                     />
                   </div>
                 ))}

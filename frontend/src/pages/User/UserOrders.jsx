@@ -113,8 +113,15 @@ export default function UserOrders() {
   };
 
   if (loading) return (
-    <div className="flex items-center justify-center min-h-[400px]">
-      <div className="w-8 h-8 border-t-2 border-white rounded-full animate-spin shadow-[0_0_20px_white]" />
+    <div className="space-y-8 animate-pulse">
+      {[...Array(2)].map((_, idx) => (
+        <div key={idx} className="bg-[#0a0a0a] border border-white/10 p-10 space-y-6">
+          <div className="h-4 w-56 bg-white/10 rounded" />
+          <div className="h-3 w-full bg-white/10 rounded" />
+          <div className="h-3 w-4/5 bg-white/10 rounded" />
+          <div className="h-12 w-full bg-white/10 rounded" />
+        </div>
+      ))}
     </div>
   );
 
