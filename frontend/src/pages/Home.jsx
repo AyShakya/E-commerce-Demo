@@ -1,28 +1,28 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchProducts } from "../api/product.api";
 
 export default function Home() {
   const [featured, setFeatured] = useState([]);
 
-  useEffect(() => {
-    document.title = "UTARAN — Contemporary Fashion";
-  }, []);
-
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
-
-  useEffect(() => {
-    loadFeatured();
-  }, []);
-
-  const loadFeatured = async () => {
+  async function loadFeatured() {
     try {
       const res = await fetchProducts({ page: 1, limit: 6 });
       setFeatured(res.data);
     } catch {
       console.error("Failed to load featured products");
     }
-  };
+  }
+
+  useEffect(() => {
+    document.title = "UTARAN — Contemporary Fashion";
+  }, []);
+
+  const scrollToTop = useCallback(() => window.scrollTo({ top: 0, behavior: "smooth" }), []);
+
+  useEffect(() => {
+    loadFeatured();
+  }, []);
 
   const CATEGORIES = [
     { label: "Clothing", image: "v1769428087/photo-1523381210434-271e8be1f52b_efjya5.jpg" },
@@ -43,6 +43,7 @@ export default function Home() {
         .animate-reveal {
           animation: revealUp 1s cubic-bezier(0.19, 1, 0.22, 1) forwards;
           opacity: 0;
+          will-change: transform, opacity;
         }
         
         /* UPDATED: Consistent Row Symmetry (Up, Down, Up) */
@@ -161,12 +162,23 @@ export default function Home() {
       <section className="bg-[#0c0c0c] py-48 px-4">
         <div className="max-w-[1500px] mx-auto">
           <div className="text-center mb-24">
-             <h2 className="text-[10px] tracking-[0.6em] uppercase text-gray-500 mb-4 block">Shop by category</h2>
-             <p className="text-3xl font-serif italic">Curated Essentials</p>
+            <h2 className="text-[10px] tracking-[0.6em] uppercase text-gray-500 mb-4 block">Shop by category</h2>
+             <Link
+               to="/products?category=Clothing"
+               onClick={scrollToTop}
+               className="text-3xl font-serif italic inline-block hover:text-white/80 transition-colors duration-300"
+             >
+               Curated Essentials
+             </Link>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             {CATEGORIES.map((cat) => (
-              <Link key={cat.label} to={`/products?category=${cat.label}`} className="group relative h-[70vh] overflow-hidden">
+              <Link
+                key={cat.label}
+                to={`/products?category=${cat.label}`}
+                onClick={scrollToTop}
+                className="group relative h-[70vh] overflow-hidden transform-gpu"
+              >
                 <img
                   src={getOptimizedUrl(cat.image, 1000)}
                   alt={cat.label}

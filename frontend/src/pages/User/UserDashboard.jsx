@@ -30,12 +30,12 @@ export default function UserDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white flex flex-col md:flex-row font-sans selection:bg-white selection:text-black">
+    <div className="min-h-screen bg-[#050505] text-slate-100 flex flex-col md:flex-row font-sans selection:bg-slate-200 selection:text-black">
       {/* SIDEBAR */}
-      <aside className="w-full md:w-72 md:min-h-screen border-b md:border-b-0 md:border-r border-white/10 p-8 md:p-12 flex flex-col bg-[#080808] relative z-20">
+      <aside className="w-full md:w-72 md:min-h-screen border-b md:border-b-0 md:border-r border-slate-200/10 p-8 md:p-12 flex flex-col bg-[#080808] relative z-20">
         <div className="mb-10 md:mb-24">
-          <h1 className="text-[9px] tracking-[0.6em] uppercase text-white/40 mb-3 font-bold">Workspace</h1>
-          <p className="font-serif italic text-3xl tracking-tighter text-white">Console</p>
+          <h1 className="text-[9px] tracking-[0.6em] uppercase text-slate-100/40 mb-3 font-bold">Workspace</h1>
+          <p className="font-serif italic text-3xl tracking-tighter text-slate-100">Console</p>
         </div>
 
         <nav className="flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-visible no-scrollbar">
@@ -45,11 +45,11 @@ export default function UserDashboard() {
               onClick={() => setTab(key)}
               className={`text-left px-5 py-4 text-[10px] tracking-[0.4em] uppercase transition-all duration-500 whitespace-nowrap flex items-center gap-4 group ${
                 tab === key 
-                  ? "text-white bg-white/[0.05] border-l-2 border-white pl-8" 
-                  : "text-white/30 hover:text-white hover:bg-white/[0.02] border-l-2 border-transparent hover:pl-8"
+                  ? "text-slate-100 bg-slate-100/[0.05] border-l-2 border-slate-200 pl-8" 
+                  : "text-slate-100/30 hover:text-slate-100 hover:bg-slate-100/[0.02] border-l-2 border-transparent hover:pl-8"
               }`}
             >
-              <span className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${tab === key ? 'bg-white shadow-[0_0_10px_white]' : 'bg-white/10 group-hover:bg-white/50'}`}></span>
+              <span className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${tab === key ? 'bg-white shadow-[0_0_8px_rgba(226,232,240,0.45)]' : 'bg-slate-100/10 group-hover:bg-slate-100/50'}`}></span>
               {label}
             </button>
           ))}
@@ -57,7 +57,7 @@ export default function UserDashboard() {
 
         <button
           onClick={logout}
-          className="hidden md:flex text-[9px] tracking-[0.5em] uppercase text-white/20 hover:text-red-500 transition-all duration-500 pt-10 border-t border-white/10 items-center justify-between group mt-auto hover:pl-2"
+          className="hidden md:flex text-[9px] tracking-[0.5em] uppercase text-slate-100/20 hover:text-red-500 transition-all duration-500 pt-10 border-t border-slate-200/10 items-center justify-between group mt-auto hover:pl-2"
         >
           <span>Terminate</span>
           <span className="group-hover:translate-x-1 transition-transform">→</span>
@@ -71,9 +71,9 @@ export default function UserDashboard() {
           {/* PROFILE */}
           {tab === "profile" && (
             <section className="space-y-16 animate-fade-in">
-              <header className="border-b border-white/20 pb-8 flex flex-col gap-2">
-                <h2 className="text-4xl font-serif italic tracking-tight text-white">Profile Identity</h2>
-                <p className="text-[10px] tracking-[0.3em] uppercase text-white/40">Personal Data Points</p>
+              <header className="border-b border-slate-200/20 pb-8 flex flex-col gap-2">
+                <h2 className="text-4xl font-serif italic tracking-tight text-slate-100">Profile Identity</h2>
+                <p className="text-[10px] tracking-[0.3em] uppercase text-slate-100/40">Personal Data Points</p>
               </header>
               
               <div className="grid gap-12">
@@ -82,9 +82,9 @@ export default function UserDashboard() {
                   { label: "Authorized Email", value: user.email },
                   { label: "Registered Phone", value: address.phone || user.address?.phone || "Not Set" }
                 ].map((item) => (
-                  <div key={item.label} className="group border-b border-white/10 pb-6 hover:border-white/30 transition-colors duration-500">
-                    <span className="text-[9px] uppercase tracking-[0.6em] text-white/40 block mb-3 font-bold group-hover:text-white/60 transition-colors">{item.label}</span>
-                    <span className="text-xl text-white/90 font-light tracking-wide">{item.value}</span>
+                  <div key={item.label} className="group border-b border-slate-200/10 pb-6 hover:border-slate-200/30 transition-colors duration-500">
+                    <span className="text-[9px] uppercase tracking-[0.6em] text-slate-100/40 block mb-3 font-bold group-hover:text-slate-100/60 transition-colors">{item.label}</span>
+                    <span className="text-xl text-slate-100/90 font-light tracking-wide">{item.value}</span>
                   </div>
                 ))}
               </div>
@@ -94,9 +94,9 @@ export default function UserDashboard() {
           {/* ADDRESS */}
           {tab === "address" && (
             <section className="space-y-16 animate-fade-in">
-               <header className="border-b border-white/20 pb-8 flex flex-col gap-2">
-                <h2 className="text-4xl font-serif italic tracking-tight text-white">Shipping Ledger</h2>
-                <p className="text-[10px] tracking-[0.3em] uppercase text-white/40">Logistics Data</p>
+               <header className="border-b border-slate-200/20 pb-8 flex flex-col gap-2">
+                <h2 className="text-4xl font-serif italic tracking-tight text-slate-100">Shipping Ledger</h2>
+                <p className="text-[10px] tracking-[0.3em] uppercase text-slate-100/40">Logistics Data</p>
               </header>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-12">
@@ -109,12 +109,12 @@ export default function UserDashboard() {
                   { label: "Postal Code", name: "postalCode" }
                 ].map((field) => (
                   <div key={field.name} className={`flex flex-col gap-4 ${field.span ? 'md:col-span-2' : ''}`}>
-                    <label className="text-[9px] uppercase tracking-[0.5em] text-white/50 font-bold">{field.label}</label>
+                    <label className="text-[9px] uppercase tracking-[0.5em] text-slate-100/50 font-bold">{field.label}</label>
                     <input
                       name={field.name}
                       value={address[field.name] || ""}
                       onChange={handleChange}
-                      className="bg-transparent border-b border-white/10 py-3 text-base text-white focus:border-white outline-none transition-all duration-500 placeholder:text-white/10 hover:border-white/30 font-light tracking-wide w-full focus:pl-2"
+                      className="bg-transparent border-b border-slate-200/10 py-3 text-base text-slate-100 focus:border-slate-200 outline-none transition-all duration-500 placeholder:text-slate-100/10 hover:border-slate-200/30 font-light tracking-wide w-full focus:pl-2"
                     />
                   </div>
                 ))}
@@ -123,12 +123,12 @@ export default function UserDashboard() {
               <div className="mt-20 flex flex-col md:flex-row items-center gap-12">
                 <button
                   onClick={saveAddress}
-                  className="group w-full md:w-auto bg-white text-black text-[10px] font-black uppercase tracking-[0.4em] px-16 py-5 hover:bg-white/90 transition-all active:scale-[0.98] shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_40px_rgba(255,255,255,0.3)]"
+                  className="group w-full md:w-auto bg-slate-100 text-black text-[10px] font-black uppercase tracking-[0.4em] px-16 py-5 hover:bg-slate-100/90 transition-all active:scale-[0.98] shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_40px_rgba(255,255,255,0.3)]"
                 >
                   <span className="group-hover:tracking-[0.6em] transition-all duration-500">Update Entry</span>
                 </button>
                 {message && (
-                  <p className="text-[9px] text-white font-bold tracking-[0.3em] uppercase italic animate-pulse border-b border-white/60 pb-1">{message}</p>
+                  <p className="text-[9px] text-slate-100 font-bold tracking-[0.3em] uppercase italic animate-pulse border-b border-slate-200/60 pb-1">{message}</p>
                 )}
               </div>
             </section>
@@ -138,19 +138,19 @@ export default function UserDashboard() {
           {tab === "orders" && (
             <div className="space-y-16 animate-fade-in">
               {/* REFUND NOTICE */}
-              <div className="bg-gradient-to-r from-white/[0.03] to-transparent border-l-[3px] border-white p-8 md:p-10 hover:bg-white/[0.05] transition-colors duration-700">
+              <div className="bg-gradient-to-r from-slate-100/[0.03] to-transparent border-l-[3px] border-slate-200 p-8 md:p-10 hover:bg-slate-100/[0.05] transition-colors duration-700">
                 <div className="flex flex-col gap-6 relative z-10">
                   <div className="flex items-center gap-4">
-                    <div className="w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_10px_white] animate-pulse" />
-                    <span className="text-[9px] tracking-[0.5em] uppercase text-white font-black">
+                    <div className="w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_8px_rgba(226,232,240,0.45)] animate-pulse" />
+                    <span className="text-[9px] tracking-[0.5em] uppercase text-slate-100 font-black">
                       Protocol 07
                     </span>
                   </div>
                   <div className="space-y-2">
-                    <h3 className="text-xl font-serif italic text-white">Refund Policy Notice</h3>
-                    <p className="text-[13px] text-white/70 leading-relaxed tracking-wide font-light max-w-2xl">
-                      Refunds are strictly processed <span className="text-white font-bold border-b border-white/30">pre-dispatch</span>. Once the archive item is in transit, the manifest is locked. 
-                      For urgent signals, contact <span className="text-white font-bold cursor-pointer hover:underline underline-offset-4 decoration-white/50">Utaran Support</span>.
+                    <h3 className="text-xl font-serif italic text-slate-100">Refund Policy Notice</h3>
+                    <p className="text-[13px] text-slate-100/70 leading-relaxed tracking-wide font-light max-w-2xl">
+                      Refunds are strictly processed <span className="text-slate-100 font-bold border-b border-slate-200/30">pre-dispatch</span>. Once the archive item is in transit, the manifest is locked. 
+                      For urgent signals, contact <span className="text-slate-100 font-bold cursor-pointer hover:underline underline-offset-4 decoration-white/50">Utaran Support</span>.
                     </p>
                   </div>
                 </div>

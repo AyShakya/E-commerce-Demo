@@ -52,36 +52,36 @@ export default function Register() {
     }
   };
 
-  const inputClass = "peer w-full bg-transparent border-b border-white/10 py-3 text-base text-white focus:border-white outline-none transition-all duration-500 placeholder-transparent";
-  const labelClass = "absolute left-0 -top-3.5 text-[9px] uppercase tracking-[0.4em] text-white/40 font-bold transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-[10px] peer-placeholder-shown:text-white/20 peer-focus:-top-3.5 peer-focus:text-[9px] peer-focus:text-white";
+  const inputClass = "peer w-full bg-transparent border-b border-slate-200/10 py-3 text-base text-slate-100 focus:border-slate-200 outline-none transition-all duration-500 placeholder-transparent";
+  const labelClass = "absolute left-0 -top-3.5 text-[9px] uppercase tracking-[0.4em] text-slate-100/40 font-bold transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-[10px] peer-placeholder-shown:text-slate-100/20 peer-focus:-top-3.5 peer-focus:text-[9px] peer-focus:text-slate-100";
 
   return (
-    <main className="min-h-screen bg-[#050505] text-white flex items-center justify-center px-6 py-20 selection:bg-white selection:text-black relative overflow-hidden">
+    <main className="min-h-screen bg-[#050505] text-slate-100 flex items-center justify-center px-6 py-20 selection:bg-slate-200 selection:text-black relative overflow-hidden">
       
       {/* Background Ambience */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-white/[0.01] rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-slate-100/[0.01] rounded-full blur-3xl pointer-events-none" />
 
       <div className="w-full max-w-[600px] relative z-10">
         
         {/* HEADER */}
         <div className="text-center mb-16">
-          <span className="text-[10px] tracking-[0.6em] uppercase text-white/40 font-bold block mb-4">
+          <span className="text-[10px] tracking-[0.6em] uppercase text-slate-100/40 font-bold block mb-4">
             New Archive Entry
           </span>
-          <h1 className="text-5xl md:text-6xl font-serif italic tracking-tighter text-white mb-2">
+          <h1 className="text-5xl md:text-6xl font-serif italic tracking-tighter text-slate-100 mb-2">
             Membership
           </h1>
-          <div className="w-px h-12 bg-gradient-to-b from-white/20 to-transparent mx-auto mt-6" />
+          <div className="w-px h-12 bg-gradient-to-b from-slate-100/20 to-transparent mx-auto mt-6" />
         </div>
 
         {/* CARD CONTAINER */}
-        <div className="bg-[#0a0a0a] border border-white/10 p-10 md:p-14 shadow-2xl relative group transition-all duration-700 hover:border-white/20">
+        <div className="bg-[#0a0a0a] border border-slate-200/10 p-10 md:p-14 shadow-2xl relative group transition-all duration-700 hover:border-slate-200/20">
           
           {/* Corner Accents */}
-          <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-white/40" />
-          <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-white/40" />
-          <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-white/40" />
-          <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-white/40" />
+          <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-slate-200/40" />
+          <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-slate-200/40" />
+          <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-slate-200/40" />
+          <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-slate-200/40" />
 
           {error && (
             <div className="mb-10 bg-red-500/5 border-l-2 border-red-500 p-4 flex items-center gap-3 animate-pulse">
@@ -133,10 +133,10 @@ export default function Register() {
             </div>
 
             {/* SHIPPING SECTION */}
-            <div className="space-y-8 pt-8 border-t border-white/10">
+            <div className="space-y-8 pt-8 border-t border-slate-200/10">
               <div className="flex items-center gap-4 mb-2">
-                <div className="w-1 h-1 bg-white/40 rounded-full" />
-                <h3 className="text-[10px] tracking-[0.4em] uppercase text-white/40 font-bold">Shipping Ledger - Optional</h3>
+                <div className="w-1 h-1 bg-slate-100/40 rounded-full" />
+                <h3 className="text-[10px] tracking-[0.4em] uppercase text-slate-100/40 font-bold">Shipping Ledger - Optional</h3>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -222,7 +222,7 @@ export default function Register() {
             {/* Submit Action */}
             <button
               disabled={loading}
-              className="group w-full py-6 bg-white text-black mt-8 relative overflow-hidden transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_30px_rgba(255,255,255,0.1)]"
+              className="group w-full py-6 bg-slate-100 text-black mt-8 relative overflow-hidden transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_30px_rgba(255,255,255,0.1)]"
             >
               <div className="absolute inset-0 bg-gray-200 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
               <span className="relative z-10 text-[10px] font-black uppercase tracking-[0.4em] group-hover:tracking-[0.6em] transition-all duration-500">
@@ -235,12 +235,12 @@ export default function Register() {
 
         {/* FOOTER */}
         <div className="mt-12 text-center space-y-4">
-          <p className="text-[10px] tracking-[0.2em] text-white/30 uppercase">
+          <p className="text-[10px] tracking-[0.2em] text-slate-100/30 uppercase">
             Already in the Archive?
           </p>
           <Link 
             to="/login" 
-            className="inline-block text-[10px] tracking-[0.4em] uppercase text-white border-b border-white/30 pb-1 hover:border-white transition-all hover:text-white/90"
+            className="inline-block text-[10px] tracking-[0.4em] uppercase text-slate-100 border-b border-slate-200/30 pb-1 hover:border-slate-200 transition-all hover:text-slate-100/90"
           >
             Access Portal
           </Link>
