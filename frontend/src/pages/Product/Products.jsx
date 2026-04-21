@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { fetchProducts } from "../../api/product.api";
 import useDebounce from "../../hooks/useDebounce";
 import ProductSkeleton from "../../components/ProductSkeleton";
@@ -14,6 +14,7 @@ const SORT_OPTIONS = [
 const CATEGORIES = ["All", ...PRODUCT_CATEGORIES];
 
 export default function Products() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -22,7 +23,10 @@ export default function Products() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("newest");
-  const [category, setCategory] = useState("All");
+  const initialCategory = searchParams.get("category");
+  const [category, setCategory] = useState(
+    initialCategory && CATEGORIES.includes(initialCategory) ? initialCategory : "All"
+  );
 
   const debouncedSearch = useDebounce(search, 400);
 
@@ -30,6 +34,16 @@ export default function Products() {
     setPage(1);
     loadProducts(1, true);
   }, [debouncedSearch, sort, category]);
+
+  useEffect(() => {
+    const queryCategory = searchParams.get("category");
+    if (queryCategory && CATEGORIES.includes(queryCategory) && queryCategory !== category) {
+      setCategory(queryCategory);
+    }
+    if (!queryCategory && category !== "All") {
+      setCategory("All");
+    }
+  }, [searchParams, category]);
 
   useEffect(() => {
     if (page > 1) loadProducts(page);
@@ -63,6 +77,16 @@ export default function Products() {
     setSearch("");
     setCategory("All");
     setSort("newest");
+    setSearchParams({});
+  };
+
+  const handleCategoryChange = (value) => {
+    setCategory(value);
+    if (value === "All") {
+      setSearchParams({});
+      return;
+    }
+    setSearchParams({ category: value });
   };
 
   return (
@@ -113,7 +137,7 @@ export default function Products() {
               {CATEGORIES.map((c) => (
                 <button
                   key={c}
-                  onClick={() => setCategory(c)}
+                  onClick={() => handleCategoryChange(c)}
                   className={`text-[10px] tracking-[0.3em] uppercase transition-all duration-300 whitespace-nowrap relative pb-1 ${
                     category === c ? "text-white" : "text-white/40 hover:text-white"
                   }`}

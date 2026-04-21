@@ -41,8 +41,24 @@ export default function ProductDetails() {
     </div>
   );
 
+  if (error) {
+    return (
+      <main className="min-h-screen bg-[#080808] text-white flex items-center justify-center px-6">
+        <div className="text-center space-y-5">
+          <p className="text-xl md:text-2xl font-serif italic">{error}</p>
+          <button
+            onClick={() => navigate("/products")}
+            className="text-[10px] tracking-[0.4em] uppercase border border-white/30 px-8 py-3 hover:bg-white hover:text-black transition-all"
+          >
+            Return to Archive
+          </button>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="h-screen bg-[#080808] text-white selection:bg-white selection:text-black antialiased overflow-hidden flex flex-col">
+    <main className="min-h-screen bg-[#080808] text-white selection:bg-white selection:text-black antialiased flex flex-col">
       <style>{`
         @keyframes subtleGlow {
           0% { box-shadow: 0 0 5px rgba(255,255,255,0.1); }
@@ -55,12 +71,12 @@ export default function ProductDetails() {
         .no-scrollbar::-webkit-scrollbar { display: none; }
       `}</style>
       
-      <div className="flex-1 max-w-[1600px] mx-auto w-full px-8 md:px-16 py-8 flex flex-col overflow-hidden">
+      <div className="flex-1 max-w-[1600px] mx-auto w-full px-4 sm:px-6 md:px-12 xl:px-16 py-6 md:py-8 flex flex-col">
         
-        <div className="flex-1 grid lg:grid-cols-12 gap-12 xl:gap-24 items-stretch overflow-hidden">
+        <div className="flex-1 grid lg:grid-cols-12 gap-8 md:gap-12 xl:gap-20 items-start">
           
           {/* LEFT COLUMN */}
-          <div className="lg:col-span-7 flex flex-col overflow-hidden">
+          <div className="lg:col-span-7 flex flex-col">
             <div className="mb-6">
               <button
                 onClick={() => navigate(-1)}
@@ -71,7 +87,7 @@ export default function ProductDetails() {
               </button>
             </div>
 
-            <div className="relative flex-1 overflow-hidden bg-[#0d0d0d] border border-white/5 group">
+            <div className="relative min-h-[360px] md:min-h-[560px] overflow-hidden bg-[#0d0d0d] border border-white/5 group">
               <img
                 src={product?.images?.[0]}
                 alt={product?.title}
@@ -88,18 +104,18 @@ export default function ProductDetails() {
           </div>
 
           {/* RIGHT COLUMN */}
-          <div className="lg:col-span-5 flex flex-col space-y-8 h-full justify-center overflow-y-auto no-scrollbar pr-4">
+          <div className="lg:col-span-5 flex flex-col space-y-8 h-full justify-start lg:justify-center overflow-visible pb-8">
             
             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <span className="text-[10px] tracking-[0.6em] uppercase text-white/70">{product?.category} studio</span>
                 <span className="h-[1px] w-12 bg-white/40"></span>
               </div>
-              <h1 className="text-5xl md:text-7xl font-serif italic leading-[1] tracking-tighter text-white">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl xl:text-6xl font-serif italic leading-[1.15] tracking-tight text-white">
                 {product?.title}
               </h1>
-              <div className="flex items-center gap-10 pt-2">
-                <span className="text-3xl font-light tracking-tight italic">₹{product?.price.toLocaleString()}</span>
+              <div className="flex flex-wrap items-start gap-5 md:gap-8 pt-2">
+                <span className="text-2xl md:text-3xl font-light tracking-tight italic">₹{product?.price.toLocaleString()}</span>
                 <div className="flex flex-col border-l border-white/20 pl-6">
                   <span className={`text-[10px] tracking-widest uppercase font-bold ${product?.quantity === 0 ? 'text-red-400' : 'text-white'}`}>
                     {product?.quantity === 0 ? "Currently Unavailable" : "Archive Certified"}
@@ -109,15 +125,15 @@ export default function ProductDetails() {
               </div>
             </div>
 
-            <div className="max-w-md">
-              <p className="text-white/80 text-[13px] md:text-sm leading-relaxed font-light tracking-wide italic">
+            <div className="max-w-xl">
+              <p className="text-white/80 text-sm md:text-base leading-relaxed font-light tracking-wide italic">
                 {product?.description || "A masterfully crafted piece emphasizing the Utaran philosophy of timeless silhouette and refined materiality."}
               </p>
             </div>
 
             <div className="w-full h-px bg-gradient-to-r from-white/30 to-transparent" />
 
-            <div className="space-y-10 max-w-sm">
+            <div className="space-y-10 max-w-md w-full">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] tracking-[0.5em] uppercase text-white/80 font-medium italic">Quantity Selector</span>
                 <div className="flex items-center border border-white/30 bg-[#111] overflow-hidden">
@@ -186,7 +202,7 @@ export default function ProductDetails() {
         </div>
       </div>
 
-      <footer className="px-16 py-6 border-t border-white/10 flex justify-between items-center text-[9px] tracking-[0.6em] uppercase text-white/40">
+      <footer className="px-4 sm:px-6 md:px-12 xl:px-16 py-6 border-t border-white/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 text-[9px] tracking-[0.6em] uppercase text-white/40">
          <span>Utaran Studio MMXXVI</span>
          <div className="flex gap-10">
             <span className="hidden md:block">Sustainable / Timeless / Refined</span>
