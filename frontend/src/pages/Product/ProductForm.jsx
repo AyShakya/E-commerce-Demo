@@ -28,29 +28,52 @@ export default function ProductForm({ product = {}, onClose, onSaved }) {
     e.preventDefault();
     setSaving(true);
 
-    try {
-      const payload = {
-        ...form,
-        tags: form.tags
-          ? form.tags.split(",").map((t) => t.trim().toLowerCase())
-          : [],
-      };
+    // --- GRACEFUL RETRY LOGIC ---
+    const MAX_RETRIES = 3;
+    const initialDelay = 1000; // 1 second
 
-      const data = new FormData();
-      Object.entries(payload).forEach(([k, v]) => {
-        data.append(k, Array.isArray(v) ? JSON.stringify(v) : v);
-      });
+    const executeWithRetry = async (attempt = 0) => {
+      try {
+        const payload = { ...form };
+        const data = new FormData();
+        
+        // Append text fields
+        Object.entries(payload).forEach(([k, v]) => {
+          if (k !== "tags") data.append(k, v);
+        });
 
-      images.forEach((img) => data.append("images", img));
+        // Append tags correctly (backend now handles comma-separated string)
+        data.append("tags", form.tags);
 
-      if (isEdit) {
-        await updateProduct(product._id, data);
-      } else {
-        await createProduct(data);
+        // Append images
+        images.forEach((img) => data.append("images", img));
+
+        if (isEdit) {
+          await updateProduct(product._id, data);
+        } else {
+          await createProduct(data);
+        }
+
+        onSaved();
+        onClose();
+      } catch (err) {
+        const isRetryable = !err.response || err.response.status >= 500;
+        
+        if (isRetryable && attempt < MAX_RETRIES) {
+          const delay = initialDelay * Math.pow(2, attempt);
+          console.warn(`Attempt ${attempt + 1} failed. Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return executeWithRetry(attempt + 1);
+        }
+
+        // If not retryable or max retries reached, throw the error
+        console.error("Final attempt failed:", err);
+        alert(err.response?.data?.message || "Action failed after multiple attempts. Please check your connection.");
       }
+    };
 
-      onSaved();
-      onClose();
+    try {
+      await executeWithRetry();
     } finally {
       setSaving(false);
     }

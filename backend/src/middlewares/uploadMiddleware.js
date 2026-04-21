@@ -3,7 +3,7 @@ import CloudinaryStorage from "multer-storage-cloudinary";
 import cloudinary from "../config/cloudinary.js";
 
 const storage = new CloudinaryStorage({
-  cloudinary,
+  cloudinary: cloudinary,
   params: {
     folder: "clothing-products",
     allowed_formats: ["jpg", "jpeg", "png", "webp"],

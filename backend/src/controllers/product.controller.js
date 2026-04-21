@@ -3,10 +3,27 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { isValidObjectId } from "../utils/isValidObject.js";
 
 export const createProduct = asyncHandler(async (req, res) => {
-  const images = req.files.map((file) => file.path);
+  try {
+    const images = req.files ? req.files.map((file) => file.path || file.url || file.secure_url) : [];
+    let { tags, ...rest } = req.body;
 
-  const product = await Product.create({ ...req.body, images });
-  res.status(201).json(product);
+    // Gracefully handle tags from FormData
+    if (tags) {
+      if (typeof tags === "string") {
+        try {
+          tags = JSON.parse(tags);
+        } catch (e) {
+          tags = tags.split(",").map((t) => t.trim());
+        }
+      }
+    }
+
+    const product = await Product.create({ ...rest, tags, images });
+    res.status(201).json(product);
+  } catch (error) {
+    console.error("Product Creation Error:", error);
+    res.status(500).json({ message: error.message || "Failed to create product" });
+  }
 });
 
 export const getAllProducts = asyncHandler(async (req, res) => {
@@ -78,17 +95,34 @@ export const getAllProducts = asyncHandler(async (req, res) => {
 });
 
 export const updateProduct = asyncHandler(async (req, res) => {
-  const updateData = { ...req.body };
+  try {
+    const updateData = { ...req.body };
 
-  if (req.files?.length) {
-    updateData.images = req.files.map((file) => file.path);
+    if (req.files?.length) {
+      updateData.images = req.files.map((file) => file.path || file.url || file.secure_url);
+    }
+
+    if (updateData.tags && typeof updateData.tags === "string") {
+      try {
+        updateData.tags = JSON.parse(updateData.tags);
+      } catch (e) {
+        updateData.tags = updateData.tags.split(",").map((t) => t.trim());
+      }
+    }
+
+    const product = await Product.findByIdAndUpdate(req.params.id, updateData, {
+      new: true,
+    });
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.json(product);
+  } catch (error) {
+    console.error("Product Update Error:", error);
+    res.status(500).json({ message: error.message || "Failed to update product" });
   }
-
-  const product = await Product.findByIdAndUpdate(req.params.id, updateData, {
-    new: true,
-  });
-
-  res.json(product);
 });
 
 export const deleteProduct = asyncHandler(async (req, res) => {
