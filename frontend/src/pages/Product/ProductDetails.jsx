@@ -127,7 +127,7 @@ export default function ProductDetails() {
 
             <div className="max-w-xl">
               <p className="text-white/80 text-sm md:text-base leading-relaxed font-light tracking-wide italic">
-                {product?.description || "A masterfully crafted piece emphasizing the Utaran philosophy of timeless silhouette and refined materiality."}
+                {product?.description || "A masterfully crafted piece emphasizing the Demo philosophy of timeless silhouette and refined materiality."}
               </p>
             </div>
 
@@ -203,7 +203,7 @@ export default function ProductDetails() {
       </div>
 
       <footer className="px-4 sm:px-6 md:px-12 xl:px-16 py-6 border-t border-white/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 text-[9px] tracking-[0.6em] uppercase text-white/40">
-         <span>Utaran Studio MMXXVI</span>
+         <span>Demo Studio MMXXVI</span>
          <div className="flex gap-10">
             <span className="hidden md:block">Sustainable / Timeless / Refined</span>
             <span className="text-white/60">Archive Index</span>

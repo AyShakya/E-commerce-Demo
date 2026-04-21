@@ -195,7 +195,7 @@ export default function Cart() {
               <div className="flex justify-between pt-10 border-t border-white/10">
                   <div className="space-y-1">
                     <p className="text-[8px] tracking-[0.4em] uppercase text-white/30">Verified</p>
-                    <p className="text-[9px] tracking-widest text-white/70 italic">UTARAN Authentic</p>
+                    <p className="text-[9px] tracking-widest text-white/70 italic">Demo Authentic</p>
                   </div>
                   <div className="space-y-1 text-right">
                     <p className="text-[8px] tracking-[0.4em] uppercase text-white/30">Privacy</p>
@@ -209,7 +209,7 @@ export default function Cart() {
 
       {/* FOOTER */}
       <footer className="mt-auto px-12 py-8 border-t border-white/10 flex justify-between items-center text-[9px] tracking-[0.6em] uppercase text-white/40 font-medium">
-         <span>Utaran Studio Bag Management</span>
+         <span>Demo Studio Bag Management</span>
          <span className="hidden sm:block">Archive Collection MMXXVI</span>
       </footer>
     </main>

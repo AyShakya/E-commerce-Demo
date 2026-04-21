@@ -150,7 +150,7 @@ export default function UserDashboard() {
                     <h3 className="text-xl font-serif italic text-slate-100">Refund Policy Notice</h3>
                     <p className="text-[13px] text-slate-100/70 leading-relaxed tracking-wide font-light max-w-2xl">
                       Refunds are strictly processed <span className="text-slate-100 font-bold border-b border-slate-200/30">pre-dispatch</span>. Once the archive item is in transit, the manifest is locked. 
-                      For urgent signals, contact <span className="text-slate-100 font-bold cursor-pointer hover:underline underline-offset-4 decoration-white/50">Utaran Support</span>.
+                      For urgent signals, contact <span className="text-slate-100 font-bold cursor-pointer hover:underline underline-offset-4 decoration-white/50"> Support</span>.
                     </p>
                   </div>
                 </div>

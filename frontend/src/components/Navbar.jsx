@@ -11,7 +11,7 @@ export default function Navbar() {
   // Close mobile menu when route changes
   useEffect(() => {
     setIsMobileMenuOpen(false);
-  }, [location]);
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     await logout();
@@ -43,7 +43,7 @@ export default function Navbar() {
           {/* Brand Identity */}
           <Link to="/" className="group flex flex-col items-center justify-center z-50">
             <span className="font-serif italic text-2xl text-black tracking-tighter group-hover:opacity-70 transition-opacity">
-              Utaran
+              Demo
             </span>
           </Link>
 
@@ -169,7 +169,7 @@ export default function Navbar() {
           {/* Sidebar Footer */}
           <div className="py-8 text-center border-t border-black/[0.03]">
             <span className="font-serif italic text-xl text-black tracking-tighter opacity-30">
-              Utaran
+              Demo
             </span>
           </div>
         </div>

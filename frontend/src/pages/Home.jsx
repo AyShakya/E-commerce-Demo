@@ -15,7 +15,7 @@ export default function Home() {
   }
 
   useEffect(() => {
-    document.title = "UTARAN — Contemporary Fashion";
+    document.title = "Demo — Contemporary Fashion";
   }, []);
 
   const scrollToTop = useCallback(() => window.scrollTo({ top: 0, behavior: "smooth" }), []);
@@ -84,7 +84,7 @@ export default function Home() {
             New Collection 2026
           </span>
           <h1 className="animate-reveal text-7xl md:text-[10rem] font-serif italic leading-none mb-8 tracking-tighter" style={{ animationDelay: '0.4s' }}>
-            Utaran
+            Demo
           </h1>
           <p className="animate-reveal text-gray-300 text-[11px] md:text-sm tracking-[0.2em] uppercase max-w-lg mx-auto leading-loose mb-12 drop-shadow-md" style={{ animationDelay: '0.6s' }}>
             Contemporary fashion rooted in craftsmanship, <br/> sustainability, and understated elegance.
@@ -209,7 +209,7 @@ export default function Home() {
         <div className="space-y-8">
           <h2 className="text-5xl font-serif italic leading-tight">Our Philosophy</h2>
           <p className="text-gray-400 leading-loose text-sm tracking-wide">
-            Utaran is more than a label. It is a commitment to the art of dressing well. 
+            Demo is more than a label. It is a commitment to the art of dressing well. 
             We source only the finest fabrics and work with artisans who share our 
             vision for a more intentional, timeless wardrobe.
           </p>
@@ -231,7 +231,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-16 mb-24">
             <div className="col-span-1 md:col-span-1">
-              <h2 className="text-2xl font-serif italic mb-8">Utaran</h2>
+              <h2 className="text-2xl font-serif italic mb-8">Demo</h2>
               <p className="text-[11px] text-gray-500 tracking-widest leading-relaxed uppercase">
                 Contemporary design for the modern individual.
               </p>
@@ -260,7 +260,7 @@ export default function Home() {
           </div>
           <div className="flex flex-col md:flex-row justify-between items-center pt-12 border-t border-white/5 gap-6">
             <p className="text-[9px] tracking-[0.5em] uppercase text-gray-600">
-              © {new Date().getFullYear()} UTARAN STUDIO
+              © {new Date().getFullYear()} Demo STUDIO
             </p>
             <div className="flex gap-12 text-[9px] tracking-[0.5em] uppercase text-gray-600">
               <a href="#" className="hover:text-white transition">Privacy</a>
