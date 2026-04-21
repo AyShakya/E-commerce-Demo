@@ -201,7 +201,7 @@ export default function Checkout() {
             </section>
 
             {/* DOMESTIC PAYMENT CTA */}
-            {/* <div className="space-y-8 w-full">
+            <div className="space-y-8 w-full">
               <button
                 onClick={handlePayment}
                 disabled={!user.address || processing}
@@ -216,36 +216,6 @@ export default function Checkout() {
                 <p className="text-[10px] tracking-[0.4em] uppercase text-white/40 font-medium">
                   Secured by Razorpay • Domestic Gateway
                 </p>
-              </div>
-            </div> */}
-
-            <div className="space-y-8 w-full">
-              {/* 1. Disabled Button */}
-              <button
-                disabled={true}
-                className="btn-authorize w-full py-7 bg-zinc-800 text-white/30 text-[12px] tracking-[0.6em] uppercase font-black cursor-not-allowed border border-white/5"
-              >
-                Gateway Offline
-              </button>
-
-              {/* 2. Error Note & Admin Contact */}
-              <div className="flex flex-col items-center gap-4 text-center">
-                <p className="text-[10px] tracking-[0.2em] uppercase text-red-500 font-bold animate-pulse">
-                  ⚠ Payment Systems Currently Unavailable
-                </p>
-
-                <p className="text-[11px] text-white/50 leading-relaxed max-w-xs">
-                  To secure this archive manually, please initialize a direct
-                  transfer request.
-                </p>
-
-                {/* Optional: Link to contact page or email */}
-                <Link
-                  to="/contact"
-                  className="text-[10px] tracking-[0.4em] uppercase text-white border-b border-white/30 pb-1 hover:text-red-400 hover:border-red-400 transition-colors"
-                >
-                  Contact Administration →
-                </Link>
               </div>
             </div>
 
