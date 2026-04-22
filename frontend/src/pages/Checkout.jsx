@@ -3,6 +3,7 @@ import {
   createPayment,
   getCheckoutStatus,
   cancelCheckout,
+  verifyPayment,
 } from "../api/payment.api";
 import { fetchProductById } from "../api/product.api";
 import { useAuth } from "../context/AuthContext";
@@ -81,7 +82,19 @@ export default function Checkout() {
         name: "Demo Studio",
         description: `Archive Procurement: ${product.title}`,
         order_id: payment.razorpayOrderId,
-        handler: () => navigate("/dashboard"),
+        handler: async (response) => {
+          try {
+            await verifyPayment(response);
+            navigate("/dashboard");
+          } catch (err) {
+            alert(
+              err.response?.data?.message ||
+                "Payment succeeded but order confirmation failed. Please contact support with your payment reference.",
+            );
+            setProcessing(false);
+            await loadCheckoutStatus();
+          }
+        },
         modal: {
           ondismiss: async () => {
             setProcessing(false);

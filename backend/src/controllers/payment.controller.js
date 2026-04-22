@@ -1,10 +1,12 @@
 import Payment from "../models/Payment.model.js";
 import Refund from "../models/Refund.model.js";
 import Product from "../models/Product.model.js";
+import Order from "../models/Order.model.js";
 import { razorpay } from "../services/payment.service.js";
 import { logPaymentEvent } from "../services/paymentAudit.service.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import Reservation from "../models/Reservation.model.js";
+import crypto from "crypto";
 
 const RESERVATION_MINUTES = 15;
 
@@ -326,4 +328,93 @@ export const refundPayment = asyncHandler(async (req, res) => {
 
     throw err;
   }
+});
+
+export const verifyPayment = asyncHandler(async (req, res) => {
+  const {
+    razorpay_order_id,
+    razorpay_payment_id,
+    razorpay_signature,
+  } = req.body;
+
+  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    return res.status(400).json({ message: "Missing payment verification fields" });
+  }
+
+  const expectedSignature = crypto
+    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+    .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+    .digest("hex");
+
+  if (expectedSignature !== razorpay_signature) {
+    return res.status(400).json({ message: "Invalid payment signature" });
+  }
+
+  const payment = await Payment.findOne({
+    providerOrderId: razorpay_order_id,
+  });
+
+  if (!payment) {
+    return res.status(404).json({ message: "Payment record not found" });
+  }
+
+  if (payment.status !== "SUCCESS") {
+    payment.status = "SUCCESS";
+    payment.providerPaymentId = razorpay_payment_id;
+    await payment.save();
+  }
+
+  if (payment.order) {
+    return res.json({
+      verified: true,
+      orderId: payment.order,
+      message: "Payment already verified",
+    });
+  }
+
+  const reservation = await Reservation.findOne({ payment: payment._id }).populate("product");
+
+  if (!reservation || reservation.status !== "ACTIVE") {
+    return res.status(409).json({
+      message: "Payment captured but checkout session is not active. Please contact support for reconciliation.",
+    });
+  }
+
+  const order = await Order.create({
+    user: reservation.user,
+    items: [
+      {
+        product: reservation.product._id,
+        title: reservation.product.title,
+        price: reservation.product.price,
+        quantity: reservation.quantity,
+      },
+    ],
+    totalAmount: payment.amount,
+    paymentStatus: "PAID",
+  });
+
+  payment.order = order._id;
+  await payment.save();
+
+  reservation.status = "COMPLETED";
+  await reservation.save();
+
+  await logPaymentEvent({
+    order: order._id,
+    user: reservation.user,
+    eventType: "PAYMENT_SUCCESS",
+    providerRef: razorpay_payment_id,
+    amount: payment.amount,
+    metadata: {
+      source: "client_verify",
+      orderId: razorpay_order_id,
+    },
+  });
+
+  return res.json({
+    verified: true,
+    orderId: order._id,
+    message: "Payment verified and order created",
+  });
 });

@@ -12,6 +12,7 @@ export const razorpayWebhook = asyncHandler(async (req, res) => {
   let event;
 
   try {
+    console.log("[Razorpay Webhook] Received event");
     const signature = req.headers["x-razorpay-signature"];
 
     const expectedSignature = crypto
@@ -45,12 +46,27 @@ export const razorpayWebhook = asyncHandler(async (req, res) => {
       payment.providerPaymentId = entity.id;
       await payment.save();
 
-      const reservationId = entity.notes?.reservationId;
-      const reservation =
-        await Reservation.findById(reservationId).populate("product");
+      const reservationFromPayment = await Reservation.findOne({
+        payment: payment._id,
+      }).populate("product");
+
+      const reservationFromNotes = entity.notes?.reservationId
+        ? await Reservation.findById(entity.notes.reservationId).populate("product")
+        : null;
+
+      const reservation = reservationFromPayment || reservationFromNotes;
 
       if (!reservation || reservation.status !== "ACTIVE") {
-        // Payment succeeded but reservation expired → admin can refund later
+        console.warn("[Razorpay Webhook] Captured payment without active reservation", {
+          orderId: entity.order_id,
+          paymentId: entity.id,
+          reservationFound: Boolean(reservation),
+          reservationStatus: reservation?.status,
+        });
+        return res.json({ ok: true });
+      }
+
+      if (payment.order) {
         return res.json({ ok: true });
       }
 
