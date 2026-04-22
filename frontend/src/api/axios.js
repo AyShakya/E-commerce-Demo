@@ -30,6 +30,11 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
+const shouldSkipRefreshFlow = (url = "") =>
+  url.includes("/auth/login") ||
+  url.includes("/auth/register") ||
+  url.includes("/auth/refresh");
+
 /* ---------------- RESPONSE INTERCEPTOR ---------------- */
 
 api.interceptors.response.use(
@@ -41,10 +46,7 @@ api.interceptors.response.use(
 
     const originalRequest = error.config;
 
-    /* ❌ If refresh itself fails → hard logout */
-    if (originalRequest.url?.includes("/auth/refresh")) {
-      localStorage.removeItem("accessToken");
-      window.location.href = "/login";
+    if (shouldSkipRefreshFlow(originalRequest.url)) {
       return Promise.reject(error);
     }
 
@@ -53,10 +55,14 @@ api.interceptors.response.use(
       error.response?.status === 401 &&
       !originalRequest._retry
     ) {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        return Promise.reject(error);
+      }
+
       /* 🛑 Hard stop if already tried */
       if (refreshAttempts >= MAX_REFRESH_ATTEMPTS) {
         localStorage.removeItem("accessToken");
-        window.location.href = "/login";
         return Promise.reject(error);
       }
 
@@ -89,7 +95,6 @@ api.interceptors.response.use(
         /* ❌ Refresh failed → logout */
         processQueue(err, null);
         localStorage.removeItem("accessToken");
-        window.location.href = "/login";
         return Promise.reject(err);
       } finally {
         isRefreshing = false;
