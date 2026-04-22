@@ -33,7 +33,9 @@ export default function ProductDetails() {
 
   const handleBuyNow = () => {
     if (!product || product.quantity === 0) return;
-    navigate("/checkout", { state: { productId: product._id, quantity } });
+    navigate(`/checkout?productId=${product._id}&quantity=${quantity}`, {
+      state: { productId: product._id, quantity },
+    });
   };
 
   if (loading) return <ProductDetailsSkeleton />;

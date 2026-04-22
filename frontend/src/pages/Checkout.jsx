@@ -1,5 +1,9 @@
 import { useLocation, useNavigate, Link } from "react-router-dom";
-import { createPayment } from "../api/payment.api";
+import {
+  createPayment,
+  getCheckoutStatus,
+  cancelCheckout,
+} from "../api/payment.api";
 import { fetchProductById } from "../api/product.api";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useState } from "react";
@@ -10,11 +14,15 @@ export default function Checkout() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const { productId, quantity } = state || {};
+  const params = new URLSearchParams(window.location.search);
+  const productId = state?.productId || params.get("productId");
+  const quantity = Number(state?.quantity || params.get("quantity") || 1);
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [checkoutStatus, setCheckoutStatus] = useState(null);
+  const [statusLoading, setStatusLoading] = useState(false);
 
   useEffect(() => {
     if (!productId) {
@@ -27,7 +35,37 @@ export default function Checkout() {
       .finally(() => setLoading(false));
   }, [productId, navigate]);
 
+  const loadCheckoutStatus = async () => {
+    if (!productId) return;
+
+    setStatusLoading(true);
+    try {
+      const status = await getCheckoutStatus(productId);
+      setCheckoutStatus(status);
+    } catch {
+      setCheckoutStatus(null);
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCheckoutStatus();
+  }, [productId]);
+
   const total = product ? product.price * quantity : 0;
+
+  const releaseCheckout = async () => {
+    try {
+      await cancelCheckout({
+        productId,
+        reservationId: checkoutStatus?.reservationId,
+      });
+      await loadCheckoutStatus();
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to cancel checkout");
+    }
+  };
 
   const handlePayment = async () => {
     if (!user.address || processing) return;
@@ -40,10 +78,18 @@ export default function Checkout() {
         key: payment.key,
         amount: payment.amount,
         currency: payment.currency,
-        name: "Demo",
-        description: `Secured Archive: ${product.title}`,
+        name: "Demo Studio",
+        description: `Archive Procurement: ${product.title}`,
         order_id: payment.razorpayOrderId,
         handler: () => navigate("/dashboard"),
+        modal: {
+          ondismiss: async () => {
+            setProcessing(false);
+            // We no longer call releaseCheckout here to avoid race conditions.
+            // Instead, the UI will show an "Active Session" state where the user can resume or cancel.
+            await loadCheckoutStatus();
+          },
+        },
         prefill: {
           name: user.name,
           email: user.email,
@@ -56,6 +102,7 @@ export default function Checkout() {
     } catch (err) {
       alert(err.response?.data?.message || "Payment initiation failed");
       setProcessing(false);
+      await loadCheckoutStatus();
     }
   };
 
@@ -197,17 +244,57 @@ export default function Checkout() {
               </div>
             </section>
 
-            {/* DOMESTIC PAYMENT CTA */}
+            {/* PAYMENT CTAs */}
             <div className="space-y-8 w-full">
-              <button
-                onClick={handlePayment}
-                disabled={!user.address || processing}
-                className="btn-authorize w-full py-7 bg-white text-black text-[12px] tracking-[0.6em] uppercase font-black disabled:opacity-20 disabled:grayscale cursor-pointer"
-              >
-                {processing
-                  ? "Establishing Connection..."
-                  : "Authorize Payment (India)"}
-              </button>
+              {statusLoading ? (
+                <p className="text-[10px] tracking-[0.3em] uppercase text-white/40">
+                  Authenticating session...
+                </p>
+              ) : checkoutStatus?.state === "ACTIVE" ? (
+                <div className="space-y-6 border border-white/20 p-8 bg-white/[0.02] backdrop-blur-sm animate-in fade-in slide-in-from-bottom-4 duration-700">
+                  <div className="flex items-center gap-4">
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    <p className="text-[10px] tracking-[0.4em] uppercase text-white font-bold">
+                      Pending Procurement Active
+                    </p>
+                  </div>
+                  
+                  <p className="text-xs text-white/60 leading-relaxed italic">
+                    This piece is currently reserved for you. Your session expires in {" "}
+                    <span className="text-white font-bold not-italic tracking-widest">
+                      {Math.floor(checkoutStatus.remainingSeconds / 60)}:
+                      {String(checkoutStatus.remainingSeconds % 60).padStart(2, '0')}
+                    </span>.
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <button
+                      onClick={handlePayment}
+                      disabled={processing}
+                      className="py-4 bg-white text-black text-[10px] tracking-[0.4em] uppercase font-black hover:bg-gray-200 transition-all"
+                    >
+                      {processing ? "Connecting..." : "Resume Payment"}
+                    </button>
+                    <button
+                      onClick={releaseCheckout}
+                      disabled={processing}
+                      className="py-4 border border-white/20 text-[10px] tracking-[0.4em] uppercase text-white/60 hover:border-white/60 hover:text-white transition-all"
+                    >
+                      Release Item
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={handlePayment}
+                  disabled={!user.address || processing}
+                  className="btn-authorize w-full py-7 bg-white text-black text-[12px] tracking-[0.6em] uppercase font-black disabled:opacity-20 disabled:grayscale cursor-pointer"
+                >
+                  {processing
+                    ? "Establishing Protocol..."
+                    : "Authorize Procurement (India)"}
+                </button>
+              )}
 
               <div className="flex flex-col items-center gap-4">
                 <p className="text-[10px] tracking-[0.4em] uppercase text-white/40 font-medium">

@@ -250,8 +250,20 @@ export default function AdminProducts() {
                 />
 
                 <div>
-                  <p className="text-sm text-white">{p.title}</p>
-                  <p className="text-xs text-white/50 mt-1">₹{p.price} • Stock {p.quantity}</p>
+                  <div className="flex items-center gap-3">
+                    <p className="text-sm text-white font-medium">{p.title}</p>
+                    {p.quantity === 0 && (
+                      <span className="text-[8px] tracking-[0.2em] bg-red-500/10 text-red-500 border border-red-500/30 px-2 py-0.5 rounded font-black uppercase">
+                        Out of Stock
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-white/50 mt-1">
+                    ₹{p.price.toLocaleString()} • 
+                    <span className={p.quantity === 0 ? "text-red-400 font-bold" : ""}>
+                      Stock {p.quantity}
+                    </span>
+                  </p>
                 </div>
               </div>
 

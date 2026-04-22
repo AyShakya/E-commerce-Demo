@@ -198,7 +198,7 @@ export default function Products() {
                 <Link
                   key={p._id}
                   to={`/products/${p._id}`}
-                  className={`product-item group block product-card-reveal ${p.stock === 0 ? 'pointer-events-none' : ''}`}
+                  className={`product-item group block product-card-reveal ${p.quantity === 0 ? 'pointer-events-none' : ''}`}
                   style={{ animationDelay: `${idx * 0.05}s` }}
                 >
                   <div className="bg-[#0f0f0f] p-5 transition-all duration-500 group-hover:bg-[#141414] border border-white/5 relative">
@@ -206,7 +206,7 @@ export default function Products() {
                       <img
                         src={p.images[0]}
                         alt={p.title}
-                        className={`h-full w-full object-cover transition-all duration-700 ease-out group-hover:scale-105 ${p.stock === 0 ? 'grayscale opacity-25' : 'grayscale-[15%] group-hover:grayscale-0'}`}
+                        className={`h-full w-full object-cover transition-all duration-700 ease-out group-hover:scale-105 ${p.quantity === 0 ? 'grayscale opacity-25' : 'grayscale-[15%] group-hover:grayscale-0'}`}
                         loading="lazy"
                       />
                     </div>
@@ -221,7 +221,7 @@ export default function Products() {
                         </p>
                       </div>
 
-                      {p.stock === 0 ? (
+                      {p.quantity === 0 ? (
                         <div className="text-[9px] tracking-[0.2em] uppercase text-white/40 border border-white/10 px-3 py-1.5 bg-white/[0.03]">
                           Sold Out
                         </div>

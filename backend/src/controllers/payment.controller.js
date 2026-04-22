@@ -8,6 +8,132 @@ import Reservation from "../models/Reservation.model.js";
 
 const RESERVATION_MINUTES = 15;
 
+const expireReservationAndRestock = async (reservation, reason = "AUTO_EXPIRED") => {
+  const updated = await Reservation.findOneAndUpdate(
+    {
+      _id: reservation._id,
+      status: "ACTIVE",
+    },
+    {
+      $set: { status: "EXPIRED" },
+    },
+    { new: true },
+  );
+
+  if (!updated) return false;
+
+  await Product.findByIdAndUpdate(updated.product, {
+    $inc: { quantity: updated.quantity },
+  });
+
+  await logPaymentEvent({
+    order: null,
+    user: updated.user,
+    eventType: reason,
+    metadata: {
+      reservationId: updated._id,
+      productId: updated.product,
+      quantity: updated.quantity,
+    },
+  });
+
+  return true;
+};
+
+const getReservationStatusPayload = (reservation, payment) => {
+  const now = Date.now();
+  const expiresAt = reservation?.expiresAt ? new Date(reservation.expiresAt) : null;
+  const remainingSeconds = expiresAt
+    ? Math.max(0, Math.floor((expiresAt.getTime() - now) / 1000))
+    : 0;
+
+  let state = "NONE";
+  if (!reservation) state = "NONE";
+  else if (reservation.status === "COMPLETED") state = "COMPLETED";
+  else if (reservation.status === "EXPIRED") state = "EXPIRED";
+  else if (payment?.status === "FAILED") state = "FAILED";
+  else state = "ACTIVE";
+
+  return {
+    state,
+    reservationId: reservation?._id || null,
+    paymentId: payment?._id || null,
+    paymentStatus: payment?.status || null,
+    providerOrderId: payment?.providerOrderId || null,
+    expiresAt,
+    remainingSeconds,
+    retryAllowed: ["NONE", "EXPIRED", "FAILED"].includes(state),
+  };
+};
+
+export const getCheckoutStatus = asyncHandler(async (req, res) => {
+  const { productId } = req.query;
+
+  if (!productId) {
+    return res.status(400).json({ message: "productId is required" });
+  }
+
+  const reservation = await Reservation.findOne({
+    user: req.user.id,
+    product: productId,
+  })
+    .sort({ createdAt: -1 })
+    .populate("payment");
+
+  if (!reservation) {
+    return res.json(getReservationStatusPayload(null, null));
+  }
+
+  if (reservation.status === "ACTIVE" && reservation.expiresAt.getTime() <= Date.now()) {
+    await expireReservationAndRestock(reservation, "CHECKOUT_AUTO_EXPIRED");
+    const expired = await Reservation.findById(reservation._id).populate("payment");
+    return res.json(getReservationStatusPayload(expired, expired?.payment || null));
+  }
+
+  if (reservation.status === "ACTIVE" && reservation.payment?.status === "FAILED") {
+    await expireReservationAndRestock(reservation, "CHECKOUT_FAILED_EXPIRED");
+    const failed = await Reservation.findById(reservation._id).populate("payment");
+    return res.json(getReservationStatusPayload(failed, failed?.payment || null));
+  }
+
+  return res.json(getReservationStatusPayload(reservation, reservation.payment || null));
+});
+
+export const cancelCheckout = asyncHandler(async (req, res) => {
+  const { productId, reservationId } = req.body;
+
+  if (!productId && !reservationId) {
+    return res.status(400).json({ message: "productId or reservationId is required" });
+  }
+
+  const query = {
+    user: req.user.id,
+    status: "ACTIVE",
+    ...(reservationId ? { _id: reservationId } : { product: productId }),
+  };
+
+  const reservation = await Reservation.findOne(query);
+
+  if (!reservation) {
+    return res.json({
+      message: "No active checkout session found",
+      released: false,
+    });
+  }
+
+  const released = await expireReservationAndRestock(reservation, "CHECKOUT_CANCELLED_BY_USER");
+
+  return res.json({
+    message: released
+      ? "Checkout session cancelled and stock restored"
+      : "Checkout session was already closed",
+    released,
+    reservationId: reservation._id,
+  });
+});
+
+import { reclaimExpiredStock } from "../services/reclaim.service.js";
+
 export const createPayment = asyncHandler(async (req, res) => {
   const { productId, quantity } = req.body;
 
@@ -15,21 +141,40 @@ export const createPayment = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Invalid request" });
   }
 
-  //Idempotency 
+  // Idempotency: Find existing active reservation
   const existingReservation = await Reservation.findOne({
     user: req.user.id,
     product: productId,
     status: "ACTIVE",
-  });
-  
+  }).populate("payment");
+
   if (existingReservation) {
-    return res.status(400).json({
-      message: "You already have a pending checkout for this item",
-    });
+    // If quantity changed, we must expire old and start new to avoid inconsistencies
+    if (existingReservation.quantity !== quantity) {
+      await expireReservationAndRestock(existingReservation, "CHECKOUT_QUANTITY_CHANGED");
+    } else if (existingReservation.expiresAt.getTime() <= Date.now()) {
+      await expireReservationAndRestock(existingReservation, "CHECKOUT_AUTO_EXPIRED");
+    } else {
+      const existingPayment = existingReservation.payment;
+      if (existingPayment?.status === "FAILED") {
+        await expireReservationAndRestock(existingReservation, "CHECKOUT_FAILED_EXPIRED");
+      } else {
+        return res.status(200).json({
+          message: "Resuming your active checkout session",
+          resumed: true,
+          reservationId: existingReservation._id,
+          expiresAt: existingReservation.expiresAt,
+          key: process.env.RAZORPAY_KEY_ID,
+          razorpayOrderId: existingPayment?.providerOrderId,
+          amount: (existingPayment?.amount || 0) * 100,
+          currency: "INR",
+        });
+      }
+    }
   }
 
-  // 1️⃣ Reserve inventory atomically
-  const product = await Product.findOneAndUpdate(
+  // 1️⃣ Try to reserve inventory atomically
+  let product = await Product.findOneAndUpdate(
     {
       _id: productId,
       isActive: true,
@@ -39,8 +184,22 @@ export const createPayment = asyncHandler(async (req, res) => {
     { new: true },
   );
 
+  // 2️⃣ If stock is low, try "Surgical Reclamation" before giving up
   if (!product) {
-    return res.status(400).json({ message: "Insufficient stock" });
+    await reclaimExpiredStock(productId);
+    product = await Product.findOneAndUpdate(
+      {
+        _id: productId,
+        isActive: true,
+        quantity: { $gte: quantity },
+      },
+      { $inc: { quantity: -quantity } },
+      { new: true },
+    );
+  }
+
+  if (!product) {
+    return res.status(400).json({ message: "Insufficient stock. This item may be locked in other checkout sessions." });
   }
 
   // 2️⃣ Create reservation
@@ -89,6 +248,9 @@ export const createPayment = asyncHandler(async (req, res) => {
   });
 
   res.json({
+    resumed: false,
+    reservationId: reservation._id,
+    expiresAt,
     key: process.env.RAZORPAY_KEY_ID,
     razorpayOrderId: razorpayOrder.id,
     amount: razorpayOrder.amount,

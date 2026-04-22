@@ -26,6 +26,8 @@ export const createProduct = asyncHandler(async (req, res) => {
   }
 });
 
+import { reclaimExpiredStock } from "../services/reclaim.service.js";
+
 export const getAllProducts = asyncHandler(async (req, res) => {
   const {
     search,
@@ -148,6 +150,17 @@ export const getProductById = asyncHandler(async (req, res) => {
 
   if (!product) {
     return res.status(404).json({ message: "Product not found" });
+  }
+
+  // SURGICAL RECLAMATION (Lean Mode):
+  // Only trigger if stock is low (0 or 1) to avoid unnecessary DB hits.
+  if (product.quantity <= 1) {
+    const reclaimed = await reclaimExpiredStock(req.params.id);
+    if (reclaimed > 0) {
+      // Re-fetch only if something was actually reclaimed
+      const freshProduct = await Product.findById(req.params.id);
+      return res.json(freshProduct);
+    }
   }
 
   res.json(product);

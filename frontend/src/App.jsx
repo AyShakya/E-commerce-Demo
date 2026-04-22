@@ -23,8 +23,13 @@ function App() {
       <Navbar />
       <Suspense
         fallback={
-          <div className="min-h-screen flex items-center justify-center bg-[#0b0b0b] text-white">
-            Loading...
+          <div className="min-h-screen flex flex-col items-center justify-center bg-[#0b0b0b] text-white">
+            <div className="space-y-4 text-center">
+              <span className="text-[10px] tracking-[0.8em] uppercase text-white/40 block animate-pulse">
+                Synchronizing Archive
+              </span>
+              <div className="w-24 h-px bg-white/20 mx-auto" />
+            </div>
           </div>
         }
       >

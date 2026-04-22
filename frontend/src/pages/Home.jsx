@@ -121,20 +121,26 @@ export default function Home() {
             <Link 
               key={product._id} 
               to={`/products/${product._id}`} 
-              className="staggered-item group relative block transition-all duration-500"
+              className={`staggered-item group relative block transition-all duration-500 ${product.quantity === 0 ? 'pointer-events-none' : ''}`}
             >
               <div className="bg-[#111] p-5 rounded-sm group-hover:bg-[#151515] transition-colors duration-500">
                 <div className="relative aspect-[4/5] overflow-hidden mb-8 shadow-2xl">
                     <img
                     src={product.images[0]}
                     loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    className={`w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 ${product.quantity === 0 ? 'grayscale opacity-25' : ''}`}
                     alt={product.title}
                     />
                     <div className="absolute top-4 left-4">
-                    <span className="bg-white text-black px-3 py-1 text-[8px] font-bold tracking-[0.1em] uppercase rounded-sm">
-                        New
-                    </span>
+                    {product.quantity === 0 ? (
+                      <span className="bg-red-500 text-white px-3 py-1 text-[8px] font-bold tracking-[0.1em] uppercase rounded-sm">
+                          Sold Out
+                      </span>
+                    ) : (
+                      <span className="bg-white text-black px-3 py-1 text-[8px] font-bold tracking-[0.1em] uppercase rounded-sm">
+                          New
+                      </span>
+                    )}
                     </div>
                 </div>
 
@@ -148,9 +154,11 @@ export default function Home() {
                     </p>
                     </div>
 
-                    <div className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-full border border-white/10 text-[11px] font-medium group-hover:bg-white group-hover:text-black transition-all duration-500">
-                    ₹{product.price.toLocaleString()}
-                    </div>
+                    {product.quantity > 0 && (
+                      <div className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-full border border-white/10 text-[11px] font-medium group-hover:bg-white group-hover:text-black transition-all duration-500">
+                      ₹{product.price.toLocaleString()}
+                      </div>
+                    )}
                 </div>
               </div>
             </Link>
