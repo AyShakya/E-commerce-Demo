@@ -7,16 +7,20 @@ import {
 } from "../api/payment.api";
 import { fetchProductById } from "../api/product.api";
 import { useAuth } from "../context/AuthContext";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { CheckoutSkeleton } from "../components/PageSkeleton";
 
 export default function Checkout() {
-  const { state } = useLocation();
+  const { state, search } = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const params = new URLSearchParams(window.location.search);
-  const productId = state?.productId || params.get("productId");
+  const params = new URLSearchParams(search);
+  const rawProductId = state?.productId ?? params.get("productId");
+  const productId =
+    typeof rawProductId === "string" && rawProductId.trim()
+      ? rawProductId
+      : null;
   const quantity = Number(state?.quantity || params.get("quantity") || 1);
 
   const [product, setProduct] = useState(null);
@@ -36,7 +40,7 @@ export default function Checkout() {
       .finally(() => setLoading(false));
   }, [productId, navigate]);
 
-  const loadCheckoutStatus = async () => {
+  const loadCheckoutStatus = useCallback(async () => {
     if (!productId) return;
 
     setStatusLoading(true);
@@ -48,15 +52,20 @@ export default function Checkout() {
     } finally {
       setStatusLoading(false);
     }
-  };
+  }, [productId]);
 
   useEffect(() => {
     loadCheckoutStatus();
-  }, [productId]);
+  }, [loadCheckoutStatus]);
 
   const total = product ? product.price * quantity : 0;
 
   const releaseCheckout = async () => {
+    if (!productId) {
+      navigate("/products");
+      return;
+    }
+
     try {
       await cancelCheckout({
         productId,
@@ -69,6 +78,10 @@ export default function Checkout() {
   };
 
   const handlePayment = async () => {
+    if (!productId) {
+      navigate("/products");
+      return;
+    }
     if (!user.address || processing) return;
     setProcessing(true);
 
