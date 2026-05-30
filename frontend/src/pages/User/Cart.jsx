@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getCart, updateCartItem, removeCartItem } from "../../api/cart.api";
 import { CartPageSkeleton } from "../../components/PageSkeleton";
+import ProductImage from "../../components/ProductImage";
 
 export default function Cart() {
   const [cart, setCart] = useState([]);
@@ -89,8 +90,10 @@ export default function Cart() {
                 >
                   {/* IMAGE */}
                   <div className="w-28 md:w-40 aspect-[3/4] bg-[#0d0d0d] border border-white/10 overflow-hidden flex-shrink-0 relative">
-                    <img
-                      src={item.product.images[0]}
+                    <ProductImage
+                      src={item.product.images?.[0]}
+                      title={item.product.title}
+                      category={item.product.category}
                       alt={item.product.title}
                       className="w-full h-full object-cover grayscale-[10%] group-hover:grayscale-0 transition-all duration-700 ease-out group-hover:scale-105"
                     />

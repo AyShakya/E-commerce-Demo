@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { fetchProductById } from "../../api/product.api";
 import { addToCart } from "../../api/cart.api";
 import { ProductDetailsSkeleton } from "../../components/PageSkeleton";
+import ProductImage from "../../components/ProductImage";
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -39,6 +40,8 @@ export default function ProductDetails() {
   };
 
   if (loading) return <ProductDetailsSkeleton />;
+
+  const galleryImages = Array.from({ length: 4 }, (_, index) => product?.images?.[index] || null);
 
   if (error) {
     return (
@@ -86,19 +89,37 @@ export default function ProductDetails() {
               </button>
             </div>
 
-            <div className="relative min-h-[360px] md:min-h-[560px] overflow-hidden bg-[#0d0d0d] border border-white/5 group">
-              <img
-                src={product?.images?.[0]}
-                alt={product?.title}
-                className="w-full h-full object-contain grayscale-[15%] group-hover:grayscale-0 group-hover:scale-[1.03] transition-all duration-[800ms] ease-out"
-                loading="eager"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
-              {product?.quantity === 0 && (
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
-                  <span className="text-[11px] tracking-[0.8em] uppercase border border-white/40 px-12 py-6 bg-black/50">Sold Out</span>
-                </div>
-              )}
+            <div className="space-y-3">
+              <div className="relative aspect-[4/5] overflow-hidden bg-[#0d0d0d] border border-white/5 group">
+                <ProductImage
+                  src={galleryImages[0]}
+                  title={product?.title}
+                  category={product?.category}
+                  alt={product?.title}
+                  className="w-full h-full object-contain grayscale-[15%] group-hover:grayscale-0 group-hover:scale-[1.03] transition-all duration-[800ms] ease-out"
+                  loading="eager"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+                {product?.quantity === 0 && (
+                  <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
+                    <span className="text-[11px] tracking-[0.8em] uppercase border border-white/40 px-12 py-6 bg-black/50">Sold Out</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                {galleryImages.slice(1).map((image, index) => (
+                  <div key={`${index}-${image || "placeholder"}`} className="relative aspect-[8/15] overflow-hidden bg-[#0d0d0d] border border-white/5">
+                    <ProductImage
+                      src={image}
+                      title={product?.title}
+                      category={product?.category}
+                      alt={`${product?.title} gallery ${index + 2}`}
+                      className="w-full h-full object-cover grayscale-[10%]"
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 

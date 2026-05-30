@@ -19,8 +19,8 @@ const router = express.Router();
 router.get("/products", getAllProducts);
 
 /* Admin */
-router.post("/admin/products", protect, adminOnly, upload.array("images", 5), createProduct);
-router.put("/admin/products/:id", protect, adminOnly, upload.array("images", 5), updateProduct);
+router.post("/admin/products", protect, adminOnly, upload.array("images", 4), createProduct);
+router.put("/admin/products/:id", protect, adminOnly, upload.array("images", 4), updateProduct);
 router.delete("/admin/products/:id", protect, adminOnly, deleteProduct);
 router.patch("/admin/products/:id/restore", protect, adminOnly, restoreProduct);
 router.get("/products/:id", getProductById);

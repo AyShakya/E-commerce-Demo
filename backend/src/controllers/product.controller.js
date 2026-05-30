@@ -2,21 +2,34 @@ import Product from "../models/Product.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { isValidObjectId } from "../utils/isValidObject.js";
 
+const MAX_PRODUCT_IMAGES = 4;
+
+const extractUploadedImages = (files = []) =>
+  files.map((file) => file.path || file.url || file.secure_url).filter(Boolean);
+
+const capImages = (images = []) => images.filter(Boolean).slice(0, MAX_PRODUCT_IMAGES);
+
+const parseTags = (tags) => {
+  if (!tags) return tags;
+
+  if (typeof tags === "string") {
+    try {
+      return JSON.parse(tags);
+    } catch {
+      return tags.split(",").map((tag) => tag.trim());
+    }
+  }
+
+  return tags;
+};
+
 export const createProduct = asyncHandler(async (req, res) => {
   try {
-    const images = req.files ? req.files.map((file) => file.path || file.url || file.secure_url) : [];
+    const images = capImages(extractUploadedImages(req.files));
     let { tags, ...rest } = req.body;
 
     // Gracefully handle tags from FormData
-    if (tags) {
-      if (typeof tags === "string") {
-        try {
-          tags = JSON.parse(tags);
-        } catch (e) {
-          tags = tags.split(",").map((t) => t.trim());
-        }
-      }
-    }
+    tags = parseTags(tags);
 
     const product = await Product.create({ ...rest, tags, images });
     res.status(201).json(product);
@@ -99,18 +112,18 @@ export const getAllProducts = asyncHandler(async (req, res) => {
 export const updateProduct = asyncHandler(async (req, res) => {
   try {
     const updateData = { ...req.body };
+    const existingProduct = await Product.findById(req.params.id);
 
-    if (req.files?.length) {
-      updateData.images = req.files.map((file) => file.path || file.url || file.secure_url);
+    if (!existingProduct) {
+      return res.status(404).json({ message: "Product not found" });
     }
 
-    if (updateData.tags && typeof updateData.tags === "string") {
-      try {
-        updateData.tags = JSON.parse(updateData.tags);
-      } catch (e) {
-        updateData.tags = updateData.tags.split(",").map((t) => t.trim());
-      }
-    }
+    updateData.images = capImages([
+      ...(existingProduct.images || []),
+      ...extractUploadedImages(req.files),
+    ]);
+
+    updateData.tags = parseTags(updateData.tags);
 
     const product = await Product.findByIdAndUpdate(req.params.id, updateData, {
       new: true,

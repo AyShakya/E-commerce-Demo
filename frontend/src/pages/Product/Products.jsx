@@ -4,6 +4,7 @@ import { fetchProducts } from "../../api/product.api";
 import useDebounce from "../../hooks/useDebounce";
 import ProductSkeleton from "../../components/ProductSkeleton";
 import { PRODUCT_CATEGORIES } from "../../api/categoryConstant";
+import ProductImage from "../../components/ProductImage";
 
 const SORT_OPTIONS = [
   { value: "newest", label: "Newest Arrivals" },
@@ -203,8 +204,10 @@ export default function Products() {
                 >
                   <div className="bg-[#0f0f0f] p-5 transition-all duration-500 group-hover:bg-[#141414] border border-white/5 relative">
                     <div className="relative aspect-[4/5] overflow-hidden mb-8 bg-[#050505]">
-                      <img
-                        src={p.images[0]}
+                      <ProductImage
+                        src={p.images?.[0]}
+                        title={p.title}
+                        category={p.category}
                         alt={p.title}
                         className={`h-full w-full object-cover transition-all duration-700 ease-out group-hover:scale-105 ${p.quantity === 0 ? 'grayscale opacity-25' : 'grayscale-[15%] group-hover:grayscale-0'}`}
                         loading="lazy"

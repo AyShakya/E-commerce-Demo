@@ -2,6 +2,8 @@ import { useState } from "react";
 import { createProduct, updateProduct } from "../../api/admin.product.api";
 import { PRODUCT_CATEGORIES } from "../../api/categoryConstant";
 
+const MAX_PRODUCT_IMAGES = 4;
+
 export default function ProductForm({ product = {}, onClose, onSaved }) {
   const isEdit = Boolean(product._id);
 
@@ -17,11 +19,23 @@ export default function ProductForm({ product = {}, onClose, onSaved }) {
   const [images, setImages] = useState([]);
   const [saving, setSaving] = useState(false);
 
+  const existingImages = Array.isArray(product.images) ? product.images.slice(0, MAX_PRODUCT_IMAGES) : [];
+
   const inputClass =
     "w-full p-3 bg-transparent text-white border border-white/20 placeholder-white/30 focus:outline-none focus:border-white/50 transition";
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleImageChange = (e) => {
+    const selectedFiles = Array.from(e.target.files || []);
+
+    if (selectedFiles.length > MAX_PRODUCT_IMAGES) {
+      alert(`You can upload up to ${MAX_PRODUCT_IMAGES} images.`);
+    }
+
+    setImages(selectedFiles.slice(0, MAX_PRODUCT_IMAGES));
   };
 
   const handleSubmit = async (e) => {
@@ -160,17 +174,31 @@ export default function ProductForm({ product = {}, onClose, onSaved }) {
           />
 
           <div className="border border-white/15 p-4 rounded bg-white/[0.02]">
-            <p className="text-[10px] tracking-[0.25em] uppercase text-white/50 mb-3">Product Images</p>
+            <div className="flex items-center justify-between gap-4 mb-3">
+              <p className="text-[10px] tracking-[0.25em] uppercase text-white/50">Product Images</p>
+              <span className="text-[9px] tracking-[0.25em] uppercase text-white/35">
+                Max {MAX_PRODUCT_IMAGES}
+              </span>
+            </div>
             <input
               type="file"
               multiple
-              onChange={(e) => setImages([...e.target.files])}
+              accept="image/*"
+              onChange={handleImageChange}
               className="block text-sm text-white/70"
             />
-            {isEdit && Array.isArray(product.images) && product.images.length > 0 && (
-              <p className="text-xs text-white/40 mt-3">
-                Existing images: {product.images.length}. Upload new files only if you want to replace or add images.
-              </p>
+            <p className="text-xs text-white/40 mt-3">
+              The catalog allows up to 4 total images per product. New uploads are added after the existing images and the first image remains the primary card image.
+            </p>
+
+            {existingImages.length > 0 && (
+              <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {existingImages.map((image, index) => (
+                  <div key={image} className="border border-white/10 bg-black/30 overflow-hidden">
+                    <img src={image} alt={`${form.title || "Product"} ${index + 1}`} className="w-full h-24 object-cover" />
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>

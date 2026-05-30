@@ -6,6 +6,7 @@ import {
   verifyPayment,
 } from "../api/payment.api";
 import { fetchProductById } from "../api/product.api";
+import ProductImage from "../components/ProductImage";
 import { useAuth } from "../context/AuthContext";
 import { useCallback, useEffect, useState } from "react";
 import { CheckoutSkeleton } from "../components/PageSkeleton";
@@ -238,8 +239,10 @@ export default function Checkout() {
 
               <div className="flex gap-8 mb-10">
                 <div className="w-24 h-32 bg-[#080808] border border-white/10 overflow-hidden flex-shrink-0">
-                  <img
-                    src={product.images[0]}
+                  <ProductImage
+                    src={product.images?.[0]}
+                    title={product.title}
+                    category={product.category}
                     alt={product.title}
                     className="w-full h-full object-cover grayscale opacity-80 group-hover:opacity-100 transition-opacity duration-700"
                   />

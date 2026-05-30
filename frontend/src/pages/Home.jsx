@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchProducts } from "../api/product.api";
+import ProductImage from "../components/ProductImage";
 
 export default function Home() {
   const [featured, setFeatured] = useState([]);
@@ -125,8 +126,10 @@ export default function Home() {
             >
               <div className="bg-[#111] p-5 rounded-sm group-hover:bg-[#151515] transition-colors duration-500">
                 <div className="relative aspect-[4/5] overflow-hidden mb-8 shadow-2xl">
-                    <img
-                    src={product.images[0]}
+                    <ProductImage
+                    src={product.images?.[0]}
+                    title={product.title}
+                    category={product.category}
                     loading="lazy"
                     className={`w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 ${product.quantity === 0 ? 'grayscale opacity-25' : ''}`}
                     alt={product.title}

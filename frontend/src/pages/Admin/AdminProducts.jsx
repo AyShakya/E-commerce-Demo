@@ -8,6 +8,7 @@ import {
 import ProductForm from "../Product/ProductForm";
 import useDebounce from "../../hooks/useDebounce";
 import AdminRowSkeleton from "../../components/AdminRowSkeleton";
+import ProductImage from "../../components/ProductImage";
 
 const TABS = [
   { key: "ACTIVE", label: "Active" },
@@ -243,8 +244,10 @@ export default function AdminProducts() {
                   </span>
                 </label>
 
-                <img
+                <ProductImage
                   src={p.images?.[0]}
+                  title={p.title}
+                  category={p.category}
                   alt={p.title}
                   className="w-16 h-20 object-cover bg-white/5"
                 />
