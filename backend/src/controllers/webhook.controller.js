@@ -4,6 +4,7 @@ import Order from "../models/Order.model.js";
 import Refund from "../models/Refund.model.js";
 import Product from "../models/Product.model.js";
 import { logPaymentEvent } from "../services/paymentAudit.service.js";
+import { finalizePayment } from "../services/paymentFinalizer.service.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import User from "../models/User.model.js";
 import Reservation from "../models/Reservation.model.js";
@@ -34,70 +35,27 @@ export const razorpayWebhook = asyncHandler(async (req, res) => {
     if (event.event === "payment.captured") {
       const entity = event.payload.payment.entity;
 
-      const payment = await Payment.findOne({
+      const result = await finalizePayment({
         providerOrderId: entity.order_id,
+        providerPaymentId: entity.id,
+        source: "webhook_payment_captured",
+        metadata: {
+          notes: entity.notes || {},
+        },
       });
 
-      if (!payment || payment.status === "SUCCESS") {
+      if (!result.notFound && !result.conflict && !result.processing) {
         return res.json({ ok: true });
       }
 
-      payment.status = "SUCCESS";
-      payment.providerPaymentId = entity.id;
-      await payment.save();
-
-      const reservationFromPayment = await Reservation.findOne({
-        payment: payment._id,
-      }).populate("product");
-
-      const reservationFromNotes = entity.notes?.reservationId
-        ? await Reservation.findById(entity.notes.reservationId).populate("product")
-        : null;
-
-      const reservation = reservationFromPayment || reservationFromNotes;
-
-      if (!reservation || reservation.status !== "ACTIVE") {
+      if (result.conflict) {
         console.warn("[Razorpay Webhook] Captured payment without active reservation", {
           orderId: entity.order_id,
           paymentId: entity.id,
-          reservationFound: Boolean(reservation),
-          reservationStatus: reservation?.status,
+          reservationFound: false,
+          reservationStatus: "INACTIVE_OR_MISSING",
         });
-        return res.json({ ok: true });
       }
-
-      if (payment.order) {
-        return res.json({ ok: true });
-      }
-
-      // Create order
-      const order = await Order.create({
-        user: reservation.user,
-        items: [
-          {
-            product: reservation.product._id,
-            title: reservation.product.title,
-            price: reservation.product.price,
-            quantity: reservation.quantity,
-          },
-        ],
-        totalAmount: payment.amount,
-        paymentStatus: "PAID",
-      });
-
-      payment.order = order._id;
-      await payment.save();
-
-      reservation.status = "COMPLETED";
-      await reservation.save();
-
-      await logPaymentEvent({
-        order: order._id,
-        user: reservation.user,
-        eventType: "PAYMENT_SUCCESS",
-        providerRef: entity.id,
-        amount: payment.amount,
-      });
 
       return res.json({ ok: true });
     }

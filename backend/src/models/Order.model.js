@@ -21,6 +21,14 @@ const orderSchema = new mongoose.Schema(
       },
     ],
 
+    payment: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Payment",
+      index: true,
+      unique: true,
+      sparse: true,
+    },
+
     totalAmount: {
       type: Number,
       required: true,

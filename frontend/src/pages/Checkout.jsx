@@ -97,7 +97,14 @@ export default function Checkout() {
         order_id: payment.razorpayOrderId,
         handler: async (response) => {
           try {
-            await verifyPayment(response);
+            const result = await verifyPayment(response);
+
+            if (result?.processing) {
+              setProcessing(false);
+              await loadCheckoutStatus();
+              return;
+            }
+
             navigate("/dashboard");
           } catch (err) {
             alert(

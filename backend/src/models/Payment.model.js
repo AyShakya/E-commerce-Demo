@@ -57,6 +57,30 @@ const paymentSchema = new mongoose.Schema(
       default: "INITIATED",
       index: true,
     },
+
+    finalizationState: {
+      type: String,
+      enum: ["READY", "FINALIZING", "COMPLETED", "FAILED"],
+      default: "READY",
+      index: true,
+    },
+
+    finalizationLockedAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+
+    finalizationToken: {
+      type: String,
+      default: null,
+      index: true,
+    },
+
+    finalizationAttempts: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );
