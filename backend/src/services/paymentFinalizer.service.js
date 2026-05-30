@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import crypto from "crypto";
 
 import Order from "../models/Order.model.js";
@@ -108,103 +109,116 @@ export const finalizePayment = async ({
   }
 
   try {
-    const reservation = await Reservation.findOne({ payment: claimedPayment._id }).populate(
-      "product",
-    );
+    const session = await mongoose.startSession();
 
-    if (!reservation || reservation.status !== "ACTIVE") {
-      await releaseFinalizationLock(claimedPayment._id, {
-        finalizationState: "FAILED",
+    try {
+      let result = null;
+
+      await session.withTransaction(async () => {
+        const reservation = await Reservation.findOne({ payment: claimedPayment._id })
+          .session(session)
+          .populate({ path: "product", options: { session } });
+
+        if (!reservation || reservation.status !== "ACTIVE") {
+          result = {
+            verified: false,
+            processing: false,
+            message:
+              "Payment captured but checkout session is not active. Please contact support for reconciliation.",
+            conflict: true,
+          };
+          return;
+        }
+
+        const existingOrder = await Order.findOne({ payment: claimedPayment._id }).session(
+          session,
+        );
+
+        if (existingOrder) {
+          claimedPayment.order = existingOrder._id;
+          claimedPayment.status = "SUCCESS";
+          claimedPayment.providerPaymentId =
+            providerPaymentId || claimedPayment.providerPaymentId;
+          claimedPayment.finalizationState = "COMPLETED";
+          claimedPayment.finalizationLockedAt = null;
+          claimedPayment.finalizationToken = null;
+          await claimedPayment.save({ session });
+
+          reservation.status = "COMPLETED";
+          await reservation.save({ session });
+
+          result = buildSuccessResponse(
+            claimedPayment,
+            existingOrder._id,
+            "Payment already verified",
+          );
+          return;
+        }
+
+        const order = await Order.create(
+          [
+            {
+              user: reservation.user,
+              items: [
+                {
+                  product: reservation.product._id,
+                  title: reservation.product.title,
+                  price: reservation.product.price,
+                  quantity: reservation.quantity,
+                },
+              ],
+              payment: claimedPayment._id,
+              totalAmount: claimedPayment.amount,
+              paymentStatus: "PAID",
+            },
+          ],
+          { session },
+        ).then((docs) => docs[0]);
+
+        claimedPayment.order = order._id;
+        claimedPayment.status = "SUCCESS";
+        claimedPayment.providerPaymentId =
+          providerPaymentId || claimedPayment.providerPaymentId;
+        claimedPayment.finalizationState = "COMPLETED";
+        claimedPayment.finalizationLockedAt = null;
+        claimedPayment.finalizationToken = null;
+        await claimedPayment.save({ session });
+
+        reservation.status = "COMPLETED";
+        await reservation.save({ session });
+
+        result = buildSuccessResponse(
+          claimedPayment,
+          order._id,
+          "Payment verified and order created",
+        );
       });
 
-      return {
-        verified: false,
-        processing: false,
-        message:
-          "Payment captured but checkout session is not active. Please contact support for reconciliation.",
-        conflict: true,
-      };
-    }
+      if (result?.conflict) {
+        await releaseFinalizationLock(claimedPayment._id, {
+          finalizationState: "FAILED",
+        });
 
-    const existingOrder = await Order.findOne({ payment: claimedPayment._id });
+        return result;
+      }
 
-    if (existingOrder) {
-      claimedPayment.order = existingOrder._id;
-      claimedPayment.status = "SUCCESS";
-      claimedPayment.providerPaymentId =
-        providerPaymentId || claimedPayment.providerPaymentId;
-      claimedPayment.finalizationState = "COMPLETED";
-      claimedPayment.finalizationLockedAt = null;
-      claimedPayment.finalizationToken = null;
-      await claimedPayment.save();
-
-      reservation.status = "COMPLETED";
-      await reservation.save();
-
-      return buildSuccessResponse(
-        claimedPayment,
-        existingOrder._id,
-        "Payment already verified",
-      );
-    }
-
-    const existingOrderId = claimedPayment.order;
-    if (existingOrderId) {
-      await releaseFinalizationLock(claimedPayment._id, {
-        finalizationState: "COMPLETED",
-      });
-
-      return buildSuccessResponse(
-        claimedPayment,
-        existingOrderId,
-        "Payment already verified",
-      );
-    }
-
-    const order = await Order.create({
-      user: reservation.user,
-      items: [
-        {
-          product: reservation.product._id,
-          title: reservation.product.title,
-          price: reservation.product.price,
-          quantity: reservation.quantity,
+      await logPaymentEvent({
+        order: result.orderId,
+        user: claimedPayment.user,
+        eventType: "PAYMENT_SUCCESS",
+        providerRef: providerPaymentId,
+        amount: claimedPayment.amount,
+        metadata: {
+          source,
+          providerOrderId,
+          ...metadata,
         },
-      ],
-      payment: claimedPayment._id,
-      totalAmount: claimedPayment.amount,
-      paymentStatus: "PAID",
-    });
+      });
 
-    claimedPayment.order = order._id;
-    claimedPayment.status = "SUCCESS";
-    claimedPayment.providerPaymentId = providerPaymentId || claimedPayment.providerPaymentId;
-    claimedPayment.finalizationState = "COMPLETED";
-    claimedPayment.finalizationLockedAt = null;
-    claimedPayment.finalizationToken = null;
-    await claimedPayment.save();
-
-    reservation.status = "COMPLETED";
-    await reservation.save();
-
-    await logPaymentEvent({
-      order: order._id,
-      user: reservation.user,
-      eventType: "PAYMENT_SUCCESS",
-      providerRef: providerPaymentId,
-      amount: claimedPayment.amount,
-      metadata: {
-        source,
-        providerOrderId,
-        ...metadata,
-      },
-    });
-
-    return buildSuccessResponse(
-      claimedPayment,
-      order._id,
-      "Payment verified and order created",
-    );
+      return result;
+    } finally {
+      await session.endSession();
+    }
   } catch (err) {
     await releaseFinalizationLock(claimedPayment._id, {
       finalizationState: "FAILED",

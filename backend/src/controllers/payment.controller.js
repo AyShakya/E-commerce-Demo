@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 import Payment from "../models/Payment.model.js";
 import Refund from "../models/Refund.model.js";
 import Product from "../models/Product.model.js";
@@ -161,13 +163,30 @@ export const createPayment = asyncHandler(async (req, res) => {
       if (existingPayment?.status === "FAILED") {
         await expireReservationAndRestock(existingReservation, "CHECKOUT_FAILED_EXPIRED");
       } else {
+        let razorpayOrderId = existingPayment?.providerOrderId;
+
+        if (!razorpayOrderId && existingPayment) {
+          const recoveredOrder = await razorpay.orders.create({
+            amount: existingPayment.amount * 100,
+            currency: "INR",
+            receipt: existingPayment._id.toString(),
+            notes: {
+              reservationId: existingReservation._id.toString(),
+            },
+          });
+
+          existingPayment.providerOrderId = recoveredOrder.id;
+          await existingPayment.save();
+          razorpayOrderId = recoveredOrder.id;
+        }
+
         return res.status(200).json({
           message: "Resuming your active checkout session",
           resumed: true,
           reservationId: existingReservation._id,
           expiresAt: existingReservation.expiresAt,
           key: process.env.RAZORPAY_KEY_ID,
-          razorpayOrderId: existingPayment?.providerOrderId,
+          razorpayOrderId,
           amount: (existingPayment?.amount || 0) * 100,
           currency: "INR",
         });
@@ -175,58 +194,126 @@ export const createPayment = asyncHandler(async (req, res) => {
     }
   }
 
-  // 1️⃣ Try to reserve inventory atomically
-  let product = await Product.findOneAndUpdate(
-    {
-      _id: productId,
-      isActive: true,
-      quantity: { $gte: quantity },
-    },
-    { $inc: { quantity: -quantity } },
-    { new: true },
-  );
+  const session = await mongoose.startSession();
 
-  // 2️⃣ If stock is low, try "Surgical Reclamation" before giving up
-  if (!product) {
-    await reclaimExpiredStock(productId);
-    product = await Product.findOneAndUpdate(
-      {
-        _id: productId,
-        isActive: true,
-        quantity: { $gte: quantity },
-      },
-      { $inc: { quantity: -quantity } },
-      { new: true },
-    );
+  let reservation;
+  let payment;
+  let product;
+  let expiresAt;
+
+  try {
+    await session.withTransaction(async () => {
+      product = await Product.findOneAndUpdate(
+        {
+          _id: productId,
+          isActive: true,
+          quantity: { $gte: quantity },
+        },
+        { $inc: { quantity: -quantity } },
+        { new: true, session },
+      );
+
+      if (!product) {
+        throw new Error("INSUFFICIENT_STOCK");
+      }
+
+      expiresAt = new Date(Date.now() + RESERVATION_MINUTES * 60 * 1000);
+
+      reservation = await Reservation.create(
+        [
+          {
+            user: req.user.id,
+            product: product._id,
+            quantity,
+            expiresAt,
+          },
+        ],
+        { session },
+      ).then((docs) => docs[0]);
+
+      payment = await Payment.create(
+        [
+          {
+            user: req.user.id,
+            provider: "RAZORPAY",
+            amount: product.price * quantity,
+            status: "PROCESSING",
+          },
+        ],
+        { session },
+      ).then((docs) => docs[0]);
+
+      reservation.payment = payment._id;
+      await reservation.save({ session });
+    });
+  } catch (error) {
+    if (error.message === "INSUFFICIENT_STOCK") {
+      // 2️⃣ If stock is low, try "Surgical Reclamation" before giving up
+      await reclaimExpiredStock(productId);
+
+      session.endSession();
+
+      const retriedProduct = await Product.findOneAndUpdate(
+        {
+          _id: productId,
+          isActive: true,
+          quantity: { $gte: quantity },
+        },
+        { $inc: { quantity: -quantity } },
+        { new: true },
+      );
+
+      if (!retriedProduct) {
+        return res.status(400).json({ message: "Insufficient stock. This item may be locked in other checkout sessions." });
+      }
+
+      const retrySession = await mongoose.startSession();
+      try {
+        await retrySession.withTransaction(async () => {
+          product = retriedProduct;
+          expiresAt = new Date(Date.now() + RESERVATION_MINUTES * 60 * 1000);
+
+          reservation = await Reservation.create(
+            [
+              {
+                user: req.user.id,
+                product: product._id,
+                quantity,
+                expiresAt,
+              },
+            ],
+            { session: retrySession },
+          ).then((docs) => docs[0]);
+
+          payment = await Payment.create(
+            [
+              {
+                user: req.user.id,
+                provider: "RAZORPAY",
+                amount: product.price * quantity,
+                status: "PROCESSING",
+              },
+            ],
+            { session: retrySession },
+          ).then((docs) => docs[0]);
+
+          reservation.payment = payment._id;
+          await reservation.save({ session: retrySession });
+        });
+      } finally {
+        await retrySession.endSession();
+      }
+    } else {
+      await session.endSession();
+      throw error;
+    }
+  } finally {
+    if (session?.client) {
+      await session.endSession();
+    }
   }
-
-  if (!product) {
-    return res.status(400).json({ message: "Insufficient stock. This item may be locked in other checkout sessions." });
-  }
-
-  // 2️⃣ Create reservation
-  const expiresAt = new Date(Date.now() + RESERVATION_MINUTES * 60 * 1000);
-
-  const reservation = await Reservation.create({
-    user: req.user.id,
-    product: product._id,
-    quantity,
-    expiresAt,
-  });
-
 
   const amount = product.price * quantity;
-
-  // 3️⃣ Create payment
-  const payment = await Payment.create({
-    user: req.user.id,
-    provider: "RAZORPAY",
-    amount,
-    status: "PROCESSING",
-  });
-
-  reservation.payment = payment._id;
-  await reservation.save();
 
   // 4️⃣ Create Razorpay order
   const razorpayOrder = await razorpay.orders.create({
@@ -238,8 +325,22 @@ export const createPayment = asyncHandler(async (req, res) => {
     },
   });
 
-  payment.providerOrderId = razorpayOrder.id;
-  await payment.save();
+  try {
+    await Payment.findByIdAndUpdate(payment._id, {
+      $set: {
+        providerOrderId: razorpayOrder.id,
+      },
+    });
+  } catch (error) {
+    await expireReservationAndRestock(reservation, "PAYMENT_GATEWAY_ORDER_SYNC_FAILED");
+    await Payment.findByIdAndUpdate(payment._id, {
+      $set: {
+        status: "FAILED",
+      },
+    });
+
+    throw error;
+  }
 
   await logPaymentEvent({
     order: null,
