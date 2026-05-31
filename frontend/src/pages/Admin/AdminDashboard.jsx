@@ -3,6 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import AdminProducts from "./AdminProducts";
 import AdminOrders from "./AdminOrders";
 import AdminRefunds from "./AdminRefunds";
+import AdminLogs from "./AdminLogs";
 
 const TABS = [
   {
@@ -22,6 +23,12 @@ const TABS = [
     label: "Refunds",
     title: "Refund Desk",
     subtitle: "Monitor and triage refund operations",
+  },
+  {
+    key: "logs",
+    label: "Logs",
+    title: "Live Activity",
+    subtitle: "Continuous feed of payment, refund and recovery events",
   },
 ];
 
@@ -90,6 +97,7 @@ export default function AdminDashboard() {
             {tab === "orders" && <AdminOrders />}
             {tab === "products" && <AdminProducts />}
             {tab === "refunds" && <AdminRefunds />}
+            {tab === "logs" && <AdminLogs />}
           </div>
         </div>
       </main>

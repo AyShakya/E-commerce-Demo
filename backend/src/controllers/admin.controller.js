@@ -38,6 +38,43 @@ export const getPaymentLogsByOrder = asyncHandler(async (req, res) => {
   res.json(logs);
 });
 
+export const getAdminLogs = asyncHandler(async (req, res) => {
+  const { page = 1, limit = 25, eventType, orderId, userId } = req.query;
+
+  const query = {};
+
+  if (eventType) query.eventType = eventType;
+  if (orderId) query.order = orderId;
+  if (userId) query.user = userId;
+
+  const pageNumber = Number(page);
+  const limitNumber = Number(limit);
+  const skip = (pageNumber - 1) * limitNumber;
+
+  const [logs, total] = await Promise.all([
+    PaymentLog.find(query)
+      .select("order user eventType provider providerRef amount metadata createdAt")
+      .populate("user", "name email")
+      .populate("order", "totalAmount paymentStatus fulfillmentStatus createdAt")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNumber)
+      .lean(),
+    PaymentLog.countDocuments(query),
+  ]);
+
+  res.json({
+    data: logs,
+    pagination: {
+      total,
+      page: pageNumber,
+      limit: limitNumber,
+      totalPages: Math.ceil(total / limitNumber),
+      hasMore: skip + logs.length < total,
+    },
+  });
+});
+
 export const getReservations = asyncHandler(async (req, res) => {
   const { status, page = 1, limit = 20 } = req.query;
 

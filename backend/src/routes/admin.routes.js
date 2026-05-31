@@ -2,6 +2,7 @@ import express from "express";
 import {
   getAdminSummary,
   getAllRefunds,
+  getAdminLogs,
   getPaymentLogsByOrder,
   getReservations,
   retryFinalizePayment,
@@ -21,6 +22,8 @@ router.get(
   adminOnly,
   getPaymentLogsByOrder
 );
+
+router.get("/logs", protect, adminOnly, getAdminLogs);
 
 router.get(
   "/reservations",

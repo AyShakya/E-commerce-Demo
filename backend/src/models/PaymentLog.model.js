@@ -59,5 +59,7 @@ const paymentLogSchema = new mongoose.Schema(
 
 paymentLogSchema.index({ order: 1, createdAt: -1 });
 paymentLogSchema.index({ eventType: 1 });
+paymentLogSchema.index({ createdAt: -1 });
+paymentLogSchema.index({ eventType: 1, createdAt: -1 });
 
 export default mongoose.model("PaymentLog", paymentLogSchema);
