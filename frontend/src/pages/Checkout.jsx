@@ -8,6 +8,7 @@ import {
 import { fetchProductById } from "../api/product.api";
 import PaymentInstruction from "../components/PaymentInstruction";
 import PaymentStatusTimeline from "../components/PaymentStatusTimeline";
+import PaymentVerificationNotice from "../components/PaymentVerificationNotice";
 import ProductImage from "../components/ProductImage";
 import { useAuth } from "../context/AuthContext";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -319,6 +320,7 @@ export default function Checkout() {
             </section>
 
             <PaymentInstruction />
+            <PaymentVerificationNotice activeStage={paymentStage} />
             <PaymentStatusTimeline activeStage={paymentStage} />
 
             {/* PAYMENT CTAs */}
