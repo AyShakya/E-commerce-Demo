@@ -6,6 +6,7 @@ import {
   verifyPayment,
 } from "../api/payment.api";
 import { fetchProductById } from "../api/product.api";
+import PaymentInstruction from "../components/PaymentInstruction";
 import ProductImage from "../components/ProductImage";
 import { useAuth } from "../context/AuthContext";
 import { useCallback, useEffect, useState } from "react";
@@ -279,6 +280,8 @@ export default function Checkout() {
                 </div>
               </div>
             </section>
+
+            <PaymentInstruction />
 
             {/* PAYMENT CTAs */}
             <div className="space-y-8 w-full">
