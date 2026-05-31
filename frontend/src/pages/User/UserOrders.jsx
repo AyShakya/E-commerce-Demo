@@ -10,6 +10,24 @@ const formatCurrency = (value) => {
   });
 };
 
+const formatOrderDate = (date) =>
+  date
+    ? new Date(date).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "Pending";
+
+const shortId = (id) => (id ? String(id).slice(-10).toUpperCase() : "PENDING");
+
+const getPaymentId = (order) =>
+  (typeof order.payment === "string" && order.payment) ||
+  order.payment?.providerPaymentId ||
+  order.payment?.providerOrderId ||
+  order.payment?._id ||
+  null;
+
 // Premium Glass-morphism Badges
 const statusBadgeColor = (status) => {
   const s = String(status || "").toLowerCase();
@@ -144,7 +162,16 @@ export default function UserOrders() {
         </div>
       </header>
 
-      {orders.map((order) => (
+      {orders.map((order) => {
+        const paymentId = getPaymentId(order);
+        const orderMeta = [
+          { label: "Order ID", value: `ORD-${shortId(order._id)}` },
+          { label: "Payment ID", value: paymentId || "Awaiting Capture" },
+          { label: "Amount", value: formatCurrency(order.totalAmount) },
+          { label: "Date", value: formatOrderDate(order.createdAt) },
+        ];
+
+        return (
         <div 
           key={order._id} 
           className="group bg-[#0a0a0a] border border-white/10 hover:border-white/30 transition-all duration-[0.5s] ease-out hover:shadow-[0_20px_80px_rgba(0,0,0,0.8)] relative overflow-hidden flex flex-col"
@@ -154,17 +181,9 @@ export default function UserOrders() {
 
           {/* Header Bar */}
           <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center px-10 py-8 border-b border-white/10 bg-white/[0.02] gap-8 relative z-10">
-            <div className="flex flex-wrap gap-12">
-              <div>
-                <p className="text-[9px] text-white/40 uppercase tracking-[0.6em] mb-1 font-bold">Ref ID</p>
-                <p className="text-sm font-black text-white tracking-[0.1em] uppercase">ARK-{order._id.slice(-6)}</p>
-              </div>
-              <div>
-                <p className="text-[9px] text-white/40 uppercase tracking-[0.6em] mb-1 font-bold">Date</p>
-                <p className="text-sm font-bold text-white tracking-[0.1em] uppercase">
-                  {new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                </p>
-              </div>
+            <div>
+              <p className="text-[9px] text-white/40 uppercase tracking-[0.6em] mb-1 font-bold">Archive Ref</p>
+              <p className="text-sm font-black text-white tracking-[0.1em] uppercase">ARK-{order._id.slice(-6)}</p>
             </div>
             
             <div className="flex gap-4 items-center flex-wrap">
@@ -216,19 +235,27 @@ export default function UserOrders() {
                <OrderTimeline status={order.fulfillmentStatus} />
             </div>
 
-            {/* TOTAL */}
-            <div className="lg:col-span-3 flex flex-col justify-between h-full items-end text-right pt-2">
-              <div>
-                <p className="text-[9px] text-white/40 uppercase tracking-[0.6em] mb-3 font-black">Total Value</p>
-                <p className="text-4xl font-serif italic text-white tracking-tighter drop-shadow-[0_0_25px_rgba(255,255,255,0.15)]">
-                  {formatCurrency(order.totalAmount)}
-                </p>
-                <p className="text-[9px] text-white/30 uppercase tracking-widest mt-2">Paid via Razorpay</p>
+            {/* ORDER DETAILS */}
+            <div className="lg:col-span-3 flex flex-col gap-4 pt-2">
+              <p className="text-[9px] text-white/40 uppercase tracking-[0.6em] font-black lg:text-right">Order Details</p>
+              <div className="grid grid-cols-1 gap-3">
+                {orderMeta.map((item) => (
+                  <div
+                    key={item.label}
+                    className="border border-white/10 bg-white/[0.025] p-4 text-left lg:text-right hover:border-white/20 transition-colors duration-500"
+                  >
+                    <p className="text-[8px] text-white/35 uppercase tracking-[0.35em] mb-2 font-bold">{item.label}</p>
+                    <p className={`break-words text-sm text-white ${item.label === "Amount" ? "font-serif italic text-2xl tracking-tight" : "font-mono tracking-[0.04em]"}`}>
+                      {item.value}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

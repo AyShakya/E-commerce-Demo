@@ -66,7 +66,8 @@ export const getMyOrders = asyncHandler(async (req, res) => {
     Order.find({ user: req.user.id })
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit),
+      .limit(limit)
+      .populate("payment", "providerPaymentId providerOrderId amount createdAt"),
     Order.countDocuments({ user: req.user.id }),
   ]);
 

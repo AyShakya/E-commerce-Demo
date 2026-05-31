@@ -2,8 +2,20 @@
 import axios from "axios";
 import { refreshAccessToken } from "./auth.api";
 
+const configuredBaseURL = import.meta.env.VITE_API_URL?.trim();
+const isLocalhostBaseURL =
+  !!configuredBaseURL && /localhost|127\.0\.0\.1/i.test(configuredBaseURL);
+const apiBaseURL =
+  import.meta.env.PROD && isLocalhostBaseURL ? undefined : configuredBaseURL;
+
+if (import.meta.env.PROD && isLocalhostBaseURL) {
+  console.warn(
+    "VITE_API_URL points to localhost in production. Set it to the deployed backend URL in Vercel, or requests will fall back to the current origin.",
+  );
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: apiBaseURL,
   withCredentials: true,
 });
 
