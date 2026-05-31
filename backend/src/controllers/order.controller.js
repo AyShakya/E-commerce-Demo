@@ -1,4 +1,7 @@
 import Order from "../models/Order.model.js";
+import Payment from "../models/Payment.model.js";
+import Refund from "../models/Refund.model.js";
+import PaymentLog from "../models/PaymentLog.model.js";
 import Product from "../models/Product.model.js";
 import { isValidObjectId } from "../utils/isValidObject.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -173,6 +176,49 @@ export const getOrderById = asyncHandler(async (req, res) => {
   }
 
   res.json(order);
+});
+
+export const getAdminOrderDetail = asyncHandler(async (req, res) => {
+  if (!isValidObjectId(req.params.id)) {
+    return res.status(400).json({ message: "Invalid order ID" });
+  }
+
+  const order = await Order.findById(req.params.id)
+    .populate("user", "name email phone")
+    .populate({ path: "payment" })
+    .lean();
+
+  if (!order) {
+    return res.status(404).json({ message: "Order not found" });
+  }
+
+  const payment =
+    order.payment ||
+    (await Payment.findOne({ order: order._id })
+      .select(
+        "amount refundedAmount status providerOrderId providerPaymentId finalizationState createdAt updatedAt",
+      )
+      .lean());
+
+  const [paymentLogs, refunds] = await Promise.all([
+    PaymentLog.find({ order: order._id })
+      .sort({ createdAt: -1 })
+      .select("eventType providerRef amount metadata createdAt")
+      .lean(),
+    payment
+      ? Refund.find({ payment: payment._id })
+          .sort({ createdAt: -1 })
+          .select("amount status providerRefundId createdAt updatedAt")
+          .lean()
+      : Promise.resolve([]),
+  ]);
+
+  return res.json({
+    order,
+    payment,
+    paymentLogs,
+    refunds,
+  });
 });
 
 export const updateOrderStatus = asyncHandler(async (req, res) => {

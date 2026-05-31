@@ -5,6 +5,7 @@ import {
   updateOrderStatus,
   getOrdersByUser,
   getOrderById,
+  getAdminOrderDetail,
 } from "../controllers/order.controller.js";
 
 import { protect, adminOnly } from "../middlewares/auth.middleware.js";
@@ -18,6 +19,7 @@ router.get("/orders/:id", protect, getOrderById);
 
 /* ADMIN */
 router.get("/admin/orders/", protect, adminOnly, getAllOrders);
+router.get("/admin/orders/:id/detail", protect, adminOnly, getAdminOrderDetail);
 router.patch("/admin/orders/:id/status", protect, adminOnly, updateOrderStatus);
 router.get(
   "/user/:userId",

@@ -44,4 +44,7 @@ const reservationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+reservationSchema.index({ status: 1, expiresAt: 1 });
+reservationSchema.index({ product: 1, status: 1, expiresAt: 1 });
+
 export default mongoose.model("Reservation", reservationSchema);

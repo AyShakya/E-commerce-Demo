@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { fetchAdminOrders, updateOrderStatus } from "../../api/admin.order.api";
+import {
+  fetchAdminOrders,
+  fetchAdminOrderDetail,
+  updateOrderStatus,
+} from "../../api/admin.order.api";
 import useDebounce from "../../hooks/useDebounce";
 import AdminOrderDetails from "./AdminOrderDetails";
-
-const STATUS_OPTIONS = ["PENDING", "SHIPPED", "DELIVERED", "CANCELLED"];
 
 const badgeStyles = {
   PAID: "bg-green-500/10 text-green-400 border-green-500/30",
@@ -22,9 +24,11 @@ export default function AdminOrders() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 400);
   const [loading, setLoading] = useState(true);
-  const [expanded, setExpanded] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [selectedOrderDetail, setSelectedOrderDetail] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState("");
 
   useEffect(() => {
     setPage(1);
@@ -55,9 +59,40 @@ export default function AdminOrders() {
     try {
       await updateOrderStatus(orderId, status);
       await loadOrders();
+      if (selectedOrderDetail?.order?._id === orderId) {
+        await loadSelectedOrderDetail(orderId);
+      }
     } finally {
       setUpdatingId(null);
     }
+  };
+
+  const loadSelectedOrderDetail = async (orderId) => {
+    setDetailLoading(true);
+    setDetailError("");
+
+    try {
+      const res = await fetchAdminOrderDetail(orderId);
+      setSelectedOrderDetail(res || null);
+    } catch (err) {
+      setDetailError(err.response?.data?.message || "Failed to load order details");
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const openOrderDrawer = async (order) => {
+    setSelectedOrder(order);
+    setSelectedOrderDetail(null);
+    setDetailError("");
+    await loadSelectedOrderDetail(order._id);
+  };
+
+  const closeOrderDrawer = () => {
+    setSelectedOrder(null);
+    setSelectedOrderDetail(null);
+    setDetailLoading(false);
+    setDetailError("");
   };
 
   return (
@@ -76,17 +111,16 @@ export default function AdminOrders() {
           <p className="text-white/50 text-sm">No orders found.</p>
         ) : (
           orders.map((order) => {
-            const refundable =
-              order.paymentStatus === "PAID" || order.paymentStatus === "PARTIALLY_REFUNDED";
-
             return (
-              <div key={order._id} className="border border-white/15 rounded bg-white/[0.02]">
-                <div
-                  className="p-4 flex flex-col md:flex-row md:items-center md:justify-between cursor-pointer hover:bg-white/[0.04]"
-                  onClick={() => setExpanded(expanded === order._id ? null : order._id)}
-                >
+              <div
+                key={order._id}
+                className="border border-white/15 rounded bg-white/[0.02] hover:bg-white/[0.04] transition cursor-pointer"
+                onClick={() => openOrderDrawer(order)}
+              >
+                <div className="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                   <div>
                     <p className="text-sm">{order.user?.email || "No email"}</p>
+                    <p className="text-xs text-white/45 mt-1">{order.user?.name || "Unnamed user"}</p>
                     <p className="text-xs text-white/50 mt-1">Order #{order._id.slice(-6).toUpperCase()}</p>
                   </div>
 
@@ -98,50 +132,10 @@ export default function AdminOrders() {
                       {order.fulfillmentStatus}
                     </span>
                   </div>
-                </div>
-
-                {expanded === order._id && (
-                  <div className="border-t border-white/10 p-4 space-y-4">
-                    <section>
-                      <h3 className="text-xs uppercase tracking-[0.3em] text-white/50 mb-2">Customer</h3>
-                      <p className="text-sm text-white/80">{order.user?.name || "Unnamed user"}</p>
-                      <p className="text-sm text-white/60">{order.user?.email}</p>
-                    </section>
-
-                    {order.items.map((item) => (
-                      <div key={item.product} className="flex justify-between text-sm text-white/70">
-                        <span>
-                          {item.title} × {item.quantity}
-                        </span>
-                        <span>₹{item.price * item.quantity}</span>
-                      </div>
-                    ))}
-
-                    <div className="flex flex-wrap gap-4 pt-2">
-                      <select
-                        value={order.fulfillmentStatus}
-                        onChange={(e) => changeStatus(order._id, e.target.value)}
-                        className="bg-transparent border border-white/20 p-2 text-sm"
-                        disabled={updatingId === order._id}
-                      >
-                        {STATUS_OPTIONS.map((s) => (
-                          <option key={s} value={s} className="bg-black">
-                            {s}
-                          </option>
-                        ))}
-                      </select>
-
-                      {refundable && (
-                        <button
-                          onClick={() => setSelectedOrder(order)}
-                          className="border border-red-500/60 text-red-400 px-4 py-2 text-sm hover:bg-red-500 hover:text-black transition"
-                        >
-                          Refund
-                        </button>
-                      )}
-                    </div>
+                  <div className="text-[10px] uppercase tracking-[0.25em] text-white/30">
+                    Open details
                   </div>
-                )}
+                </div>
               </div>
             );
           })
@@ -172,7 +166,16 @@ export default function AdminOrders() {
       </div>
 
       {selectedOrder && (
-        <AdminOrderDetails order={selectedOrder} onClose={() => setSelectedOrder(null)} />
+        <AdminOrderDetails
+          order={selectedOrder}
+          detail={selectedOrderDetail}
+          detailLoading={detailLoading}
+          detailError={detailError}
+          statusUpdating={updatingId === selectedOrder._id}
+          onClose={closeOrderDrawer}
+          onChangeStatus={changeStatus}
+          onRefresh={() => loadSelectedOrderDetail(selectedOrder._id)}
+        />
       )}
     </div>
   );

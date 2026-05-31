@@ -24,13 +24,11 @@ const paymentSchema = new mongoose.Schema(
     /** Razorpay order_id */
     providerOrderId: {
       type: String,
-      index: true,
     },
 
     /** Razorpay payment_id (after success) */
     providerPaymentId: {
       type: String,
-      index: true,
     },
 
     amount: {
@@ -86,5 +84,7 @@ const paymentSchema = new mongoose.Schema(
 );
 
 paymentSchema.index({ user: 1, createdAt: -1 });
+paymentSchema.index({ providerOrderId: 1 }, { unique: true, sparse: true });
+paymentSchema.index({ providerPaymentId: 1 }, { unique: true, sparse: true });
 
 export default mongoose.model("Payment", paymentSchema);

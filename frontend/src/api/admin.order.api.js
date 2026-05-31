@@ -26,3 +26,8 @@ export const updateOrderStatus = async (orderId, status) => {
   });
   return res.data;
 };
+
+export const fetchAdminOrderDetail = async (orderId) => {
+  const res = await api.get(`/admin/orders/${orderId}/detail`);
+  return res.data;
+};

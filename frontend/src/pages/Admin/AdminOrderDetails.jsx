@@ -1,61 +1,82 @@
 import { useState } from "react";
 import { initiateRefund } from "../../api/admin.payment.api";
 
-export default function AdminOrderDetails({ order, onClose }) {
+const STATUS_OPTIONS = ["PENDING", "SHIPPED", "DELIVERED", "CANCELLED"];
+
+export default function AdminOrderDetails({
+  order,
+  detail,
+  detailLoading,
+  detailError,
+  statusUpdating,
+  onClose,
+  onRefresh,
+  onChangeStatus,
+}) {
   const [refundAmount, setRefundAmount] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [refundLoading, setRefundLoading] = useState(false);
+  const [refundError, setRefundError] = useState("");
+
+  const orderData = detail?.order || order;
+  const payment = detail?.payment || orderData?.payment || null;
+  const paymentLogs = detail?.paymentLogs || [];
+  const refunds = detail?.refunds || [];
 
   const canRefund =
-    order.paymentStatus === "PAID" ||
-    order.paymentStatus === "PARTIALLY_REFUNDED";
+    orderData?.paymentStatus === "PAID" ||
+    orderData?.paymentStatus === "PARTIALLY_REFUNDED";
 
-  const paidAmount = order.payment?.amount || 0;
-  const refundedAmount = order.payment?.refundedAmount || 0;
+  const paidAmount = payment?.amount || 0;
+  const refundedAmount = payment?.refundedAmount || 0;
   const maxRefund = paidAmount - refundedAmount;
 
+  const submitStatusChange = async (nextStatus) => {
+    if (!orderData?._id || !onChangeStatus) return;
+    await onChangeStatus(orderData._id, nextStatus);
+  };
+
   const handleRefund = async () => {
-    setError("");
+    setRefundError("");
 
     const amount = refundAmount ? Number(refundAmount) : maxRefund;
 
-    if (!order.payment?._id) {
-      setError("Payment information missing");
+    if (!payment?._id) {
+      setRefundError("Payment information missing");
       return;
     }
 
     if (amount <= 0 || amount > maxRefund) {
-      setError(`Invalid amount. Max refundable ₹${maxRefund}`);
+      setRefundError(`Invalid amount. Max refundable ₹${maxRefund}`);
       return;
     }
 
     try {
-      setLoading(true);
+      setRefundLoading(true);
       await initiateRefund({
-        paymentId: order.payment._id,
+        paymentId: payment._id,
         amount,
       });
       setRefundAmount("");
-      alert("Refund initiated successfully");
+      await onRefresh?.();
     } catch (err) {
-      setError(err.response?.data?.message || "Refund failed");
+      setRefundError(err.response?.data?.message || "Refund failed");
     } finally {
-      setLoading(false);
+      setRefundLoading(false);
     }
   };
 
   return (
     <div className="fixed inset-0 bg-black/60 flex justify-end z-50">
-      <div className="w-full max-w-lg bg-[#0b0b0b] p-6 overflow-y-auto space-y-8">
+      <div className="w-full max-w-xl bg-[#0b0b0b] p-6 overflow-y-auto space-y-8 border-l border-white/10">
 
         {/* HEADER */}
         <div className="flex justify-between items-center">
           <div>
             <h2 className="text-lg tracking-wide">
-              Order #{order._id.slice(-6).toUpperCase()}
+              Order #{orderData?._id?.slice(-6).toUpperCase()}
             </h2>
             <p className="text-xs text-gray-500 font-mono">
-              {order._id}
+              {orderData?._id}
             </p>
           </div>
 
@@ -72,43 +93,23 @@ export default function AdminOrderDetails({ order, onClose }) {
           <h3 className="text-xs text-gray-500 uppercase tracking-wide">
             Customer
           </h3>
-          <p className="text-sm">{order.user?.name}</p>
-          <p className="text-sm text-gray-400">{order.user?.email}</p>
+          <p className="text-sm">{orderData?.user?.name || "Unnamed user"}</p>
+          <p className="text-sm text-gray-400">{orderData?.user?.email || "No email"}</p>
           <p className="text-xs text-gray-500 font-mono">
-            User ID: {order.user?._id}
+            User ID: {orderData?.user?._id || "N/A"}
           </p>
         </section>
-
-        {/* ADDRESS */}
-        {order.shippingAddress && (
-          <section className="space-y-1">
-            <h3 className="text-xs text-gray-500 uppercase tracking-wide">
-              Shipping Address
-            </h3>
-            <p className="text-sm text-gray-400 leading-relaxed">
-              {order.shippingAddress.fullName}
-              <br />
-              {order.shippingAddress.line1}
-              <br />
-              {order.shippingAddress.city},{" "}
-              {order.shippingAddress.state}{" "}
-              {order.shippingAddress.postalCode}
-              <br />
-              Phone: {order.shippingAddress.phone}
-            </p>
-          </section>
-        )}
 
         {/* ITEMS */}
         <section className="space-y-3">
           <h3 className="text-xs text-gray-500 uppercase tracking-wide">
-            Items ({order.items.length})
+            Items ({orderData?.items?.length || 0})
           </h3>
 
           <div className="space-y-2">
-            {order.items.map((item) => (
+            {(orderData?.items || []).map((item) => (
               <div
-                key={item.product}
+                key={String(item.product)}
                 className="flex justify-between text-sm border-b border-[#1f1f1f] pb-2"
               >
                 <div>
@@ -131,7 +132,7 @@ export default function AdminOrderDetails({ order, onClose }) {
           </div>
         </section>
 
-        {/* PAYMENT SUMMARY
+        {/* PAYMENT SUMMARY */}
         <section className="border border-[#1f1f1f] rounded p-4 space-y-2">
           <h3 className="text-xs text-gray-500 uppercase tracking-wide">
             Payment Summary
@@ -153,15 +154,34 @@ export default function AdminOrderDetails({ order, onClose }) {
           </div>
 
           <div className="text-xs text-gray-500 pt-2">
-            Payment Status:{" "}
-            <span className="text-white">{order.paymentStatus}</span>
+            Payment Status: <span className="text-white">{orderData?.paymentStatus || "N/A"}</span>
           </div>
-        </section> */}
 
-        {/* META */}
-        <section className="text-xs text-gray-500 space-y-1">
-          <p>Fulfillment: {order.fulfillmentStatus}</p>
-          <p>Created: {new Date(order.createdAt).toLocaleString()}</p>
+          <div className="text-xs text-gray-500 pt-1">
+            Fulfillment Status: <span className="text-white">{orderData?.fulfillmentStatus || "N/A"}</span>
+          </div>
+        </section>
+
+        {/* ACTIONS */}
+        <section className="space-y-3">
+          <h3 className="text-xs text-gray-500 uppercase tracking-wide">
+            Quick Actions
+          </h3>
+
+          <div className="flex flex-wrap gap-3 items-center">
+            <select
+              value={orderData?.fulfillmentStatus || "PENDING"}
+              onChange={(e) => submitStatusChange(e.target.value)}
+              className="bg-transparent border border-white/20 p-2 text-sm"
+              disabled={detailLoading || statusUpdating || !onChangeStatus}
+            >
+              {STATUS_OPTIONS.map((status) => (
+                <option key={status} value={status} className="bg-black">
+                  {status}
+                </option>
+              ))}
+            </select>
+          </div>
         </section>
 
         {/* REFUND – DANGER ZONE */}
@@ -182,20 +202,75 @@ export default function AdminOrderDetails({ order, onClose }) {
 
               <button
                 onClick={handleRefund}
-                disabled={loading}
+                disabled={refundLoading || !payment?._id}
                 className="border border-red-500 text-red-400 px-4 py-2 text-sm
                   hover:bg-red-500 hover:text-black transition
                   disabled:opacity-50"
               >
-                {loading ? "Processing…" : "Refund"}
+                {refundLoading ? "Processing…" : "Refund"}
               </button>
             </div>
 
-            {error && (
-              <p className="text-xs text-red-400">{error}</p>
+            {refundError && (
+              <p className="text-xs text-red-400">{refundError}</p>
             )}
           </section>
         )}
+
+        <section className="space-y-3 border-t border-white/10 pt-5">
+          <h3 className="text-xs text-gray-500 uppercase tracking-wide">
+            Payment Logs
+          </h3>
+
+          {detailLoading ? (
+            <p className="text-sm text-gray-400">Loading details…</p>
+          ) : detailError ? (
+            <p className="text-sm text-red-400">{detailError}</p>
+          ) : paymentLogs.length === 0 ? (
+            <p className="text-sm text-gray-400">No payment logs available.</p>
+          ) : (
+            <div className="space-y-2">
+              {paymentLogs.slice(0, 8).map((log) => (
+                <div key={log._id} className="border border-white/10 rounded p-3 text-xs text-gray-300">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="uppercase tracking-wide text-white/70">{log.eventType}</span>
+                    <span className="text-white/40">{new Date(log.createdAt).toLocaleString()}</span>
+                  </div>
+                  <p className="mt-1 text-gray-400">{log.providerRef || "No provider ref"}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="space-y-3 border-t border-white/10 pt-5">
+          <h3 className="text-xs text-gray-500 uppercase tracking-wide">
+            Refund History
+          </h3>
+
+          {refunds.length === 0 ? (
+            <p className="text-sm text-gray-400">No refunds recorded.</p>
+          ) : (
+            <div className="space-y-2">
+              {refunds.map((refund) => (
+                <div key={refund._id} className="border border-white/10 rounded p-3 text-xs text-gray-300">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="uppercase tracking-wide text-white/70">{refund.status}</span>
+                    <span className="text-white/40">{new Date(refund.createdAt).toLocaleString()}</span>
+                  </div>
+                  <p className="mt-1 text-gray-400">
+                    ₹{refund.amount}{refund.providerRefundId ? ` • ${refund.providerRefundId}` : ""}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="text-xs text-gray-500 space-y-1">
+          <p>Created: {orderData?.createdAt ? new Date(orderData.createdAt).toLocaleString() : "N/A"}</p>
+          <p>Last Updated: {orderData?.updatedAt ? new Date(orderData.updatedAt).toLocaleString() : "N/A"}</p>
+        </section>
       </div>
     </div>
   );
