@@ -7,10 +7,14 @@ import {
 } from "../api/payment.api";
 import { fetchProductById } from "../api/product.api";
 import PaymentInstruction from "../components/PaymentInstruction";
+import PaymentStatusTimeline from "../components/PaymentStatusTimeline";
 import ProductImage from "../components/ProductImage";
 import { useAuth } from "../context/AuthContext";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CheckoutSkeleton } from "../components/PageSkeleton";
+
+const PAYMENT_STAGE_MIN_MS = 650;
+const ORDER_CONFIRMED_MIN_MS = 900;
 
 export default function Checkout() {
   const { state, search } = useLocation();
@@ -28,8 +32,10 @@ export default function Checkout() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [paymentStage, setPaymentStage] = useState(null);
   const [checkoutStatus, setCheckoutStatus] = useState(null);
   const [statusLoading, setStatusLoading] = useState(false);
+  const stageStartedAtRef = useRef(0);
 
   useEffect(() => {
     if (!productId) {
@@ -62,6 +68,25 @@ export default function Checkout() {
 
   const total = product ? product.price * quantity : 0;
 
+  const showPaymentStage = useCallback((stage) => {
+    stageStartedAtRef.current = Date.now();
+    setPaymentStage(stage);
+  }, []);
+
+  const holdCurrentStage = useCallback(async (minimumMs = PAYMENT_STAGE_MIN_MS) => {
+    const elapsedMs = Date.now() - stageStartedAtRef.current;
+    const remainingMs = Math.max(minimumMs - elapsedMs, 0);
+
+    if (remainingMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, remainingMs));
+    }
+  }, []);
+
+  const resetPaymentProgress = useCallback(() => {
+    setProcessing(false);
+    setPaymentStage(null);
+  }, []);
+
   const releaseCheckout = async () => {
     if (!productId) {
       navigate("/products");
@@ -86,9 +111,12 @@ export default function Checkout() {
     }
     if (!user.address || processing) return;
     setProcessing(true);
+    showPaymentStage("creating");
 
     try {
       const payment = await createPayment({ productId, quantity });
+      await holdCurrentStage();
+      showPaymentStage("redirecting");
 
       const razorpay = new window.Razorpay({
         key: payment.key,
@@ -99,27 +127,34 @@ export default function Checkout() {
         order_id: payment.razorpayOrderId,
         handler: async (response) => {
           try {
+            await holdCurrentStage();
+            showPaymentStage("verifying");
             const result = await verifyPayment(response);
+            await holdCurrentStage();
 
             if (result?.processing) {
-              setProcessing(false);
+              resetPaymentProgress();
               await loadCheckoutStatus();
               return;
             }
 
+            showPaymentStage("confirming");
+            await holdCurrentStage();
+            showPaymentStage("confirmed");
+            await holdCurrentStage(ORDER_CONFIRMED_MIN_MS);
             navigate("/dashboard");
           } catch (err) {
             alert(
               err.response?.data?.message ||
                 "Payment succeeded but order confirmation failed. Please contact support with your payment reference.",
             );
-            setProcessing(false);
+            resetPaymentProgress();
             await loadCheckoutStatus();
           }
         },
         modal: {
           ondismiss: async () => {
-            setProcessing(false);
+            resetPaymentProgress();
             // We no longer call releaseCheckout here to avoid race conditions.
             // Instead, the UI will show an "Active Session" state where the user can resume or cancel.
             await loadCheckoutStatus();
@@ -133,10 +168,12 @@ export default function Checkout() {
         theme: { color: "#000000" },
       });
 
+      await holdCurrentStage();
       razorpay.open();
+      showPaymentStage("waiting");
     } catch (err) {
       alert(err.response?.data?.message || "Payment initiation failed");
-      setProcessing(false);
+      resetPaymentProgress();
       await loadCheckoutStatus();
     }
   };
@@ -282,6 +319,7 @@ export default function Checkout() {
             </section>
 
             <PaymentInstruction />
+            <PaymentStatusTimeline activeStage={paymentStage} />
 
             {/* PAYMENT CTAs */}
             <div className="space-y-8 w-full">
