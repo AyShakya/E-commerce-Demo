@@ -97,9 +97,12 @@ export default function ProductForm({ product = {}, onClose, onSaved }) {
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <form
         onSubmit={handleSubmit}
-        className="bg-[#050505] border border-white/20 p-6 md:p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        className="bg-[#0a0a0a] border border-white/12 p-6 md:p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-[0_20px_80px_rgba(0,0,0,0.5)]"
       >
-        <div className="border-b border-white/20 pb-6 mb-6">
+        <div className="border-b border-white/12 pb-6 mb-6">
+          <p className="text-[9px] uppercase tracking-[0.55em] text-white/35 mb-3">
+            Catalog Editor
+          </p>
           <h2 className="text-3xl font-serif italic tracking-tight text-white">
             {isEdit ? "Update Product" : "Create Product"}
           </h2>
@@ -207,7 +210,7 @@ export default function ProductForm({ product = {}, onClose, onSaved }) {
           <button
             type="button"
             onClick={onClose}
-            className="border border-white/20 px-5 py-3 text-white/70 hover:text-white hover:border-white/40 transition"
+            className="border border-white/15 px-5 py-3 text-white/70 hover:text-white hover:border-white/35 transition"
           >
             Cancel
           </button>
@@ -215,7 +218,7 @@ export default function ProductForm({ product = {}, onClose, onSaved }) {
           <button
             type="submit"
             disabled={saving}
-            className="bg-white text-black px-8 py-3 text-[11px] font-black uppercase tracking-[0.3em] disabled:opacity-70"
+            className="bg-white text-black px-8 py-3 text-[11px] font-black uppercase tracking-[0.3em] disabled:opacity-70 hover:bg-white/90 transition"
           >
             {saving ? "Saving..." : "Save"}
           </button>
