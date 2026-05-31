@@ -4,6 +4,7 @@ import {
   fetchAdminOrderDetail,
   updateOrderStatus,
 } from "../../api/admin.order.api";
+import { runAdminReconcile } from "../../api/admin.payment.api";
 import useDebounce from "../../hooks/useDebounce";
 import AdminOrderDetails from "./AdminOrderDetails";
 
@@ -29,6 +30,8 @@ export default function AdminOrders() {
   const [selectedOrderDetail, setSelectedOrderDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState("");
+  const [reconcileLoading, setReconcileLoading] = useState(false);
+  const [reconcileResult, setReconcileResult] = useState(null);
 
   useEffect(() => {
     setPage(1);
@@ -95,14 +98,58 @@ export default function AdminOrders() {
     setDetailError("");
   };
 
+  const handleReconcile = async () => {
+    setReconcileLoading(true);
+    setReconcileResult(null);
+
+    try {
+      const result = await runAdminReconcile();
+      setReconcileResult(result);
+      await loadOrders();
+      if (selectedOrder) {
+        await loadSelectedOrderDetail(selectedOrder._id);
+      }
+    } finally {
+      setReconcileLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full space-y-6">
-      <input
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search by email, name or order ID"
-        className="p-3 bg-transparent border border-white/20 rounded w-full lg:w-[26rem] text-sm focus:outline-none focus:border-white/40"
-      />
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by email, name or order ID"
+          className="p-3 bg-transparent border border-white/20 rounded w-full lg:w-[26rem] text-sm focus:outline-none focus:border-white/40"
+        />
+
+        <button
+          onClick={handleReconcile}
+          disabled={reconcileLoading}
+          className="border border-white/20 px-4 py-3 text-xs uppercase tracking-[0.2em] disabled:opacity-40 hover:border-white/40 transition"
+        >
+          {reconcileLoading ? "Reconciling…" : "Run Reconcile"}
+        </button>
+      </div>
+
+      {reconcileResult && (
+        <div className="border border-white/10 rounded bg-white/[0.02] p-4 text-xs text-white/70 space-y-2">
+          <p className="uppercase tracking-[0.2em] text-white/45">Reconcile Result</p>
+          <p>
+            Expired reservations scanned: {reconcileResult.scanned?.expiredReservations ?? 0}
+          </p>
+          <p>
+            Stale payments scanned: {reconcileResult.scanned?.stalePayments ?? 0}
+          </p>
+          <p>
+            Captured without order scanned: {reconcileResult.scanned?.capturedWithoutOrder ?? 0}
+          </p>
+          <p>
+            Stock reclaimed: {reconcileResult.reclaimedStock ?? 0}
+          </p>
+        </div>
+      )}
 
       <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-2">
         {loading ? (
@@ -175,6 +222,7 @@ export default function AdminOrders() {
           onClose={closeOrderDrawer}
           onChangeStatus={changeStatus}
           onRefresh={() => loadSelectedOrderDetail(selectedOrder._id)}
+          onReconcile={handleReconcile}
         />
       )}
     </div>

@@ -264,10 +264,17 @@ export const getAdminProducts = asyncHandler(async (req, res) => {
     }));
   }
 
-  const skip = (Number(page) - 1) * Number(limit);
+  const pageNumber = Number(page);
+  const limitNumber = Number(limit);
+  const skip = (pageNumber - 1) * limitNumber;
 
   const [products, total] = await Promise.all([
-    Product.find(query).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)),
+    Product.find(query)
+      .select("title price quantity images isActive category createdAt updatedAt")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNumber)
+      .lean(),
     Product.countDocuments(query),
   ]);
 
@@ -275,9 +282,9 @@ export const getAdminProducts = asyncHandler(async (req, res) => {
     data: products,
     pagination: {
       total,
-      page: Number(page),
-      limit: Number(limit),
-      totalPages: Math.ceil(total / limit),
+      page: pageNumber,
+      limit: limitNumber,
+      totalPages: Math.ceil(total / limitNumber),
       hasMore: skip + products.length < total,
     },
   });

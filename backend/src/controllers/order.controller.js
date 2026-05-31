@@ -89,62 +89,85 @@ export const getAllOrders = asyncHandler(async (req, res) => {
     limit = 10,
   } = req.query;
 
+  const pageNumber = Number(page);
+  const limitNumber = Number(limit);
+  const skip = (pageNumber - 1) * limitNumber;
+
   const match = {};
 
   if (paymentStatus) match.paymentStatus = paymentStatus;
   if (fulfillmentStatus) match.fulfillmentStatus = fulfillmentStatus;
 
-  const skip = (page - 1) * limit;
+  const pipeline = [{ $match: match }];
 
-  const pipeline = [
-    { $match: match },
-
-    // 👤 User
-    {
-      $lookup: {
-        from: "users",
-        localField: "user",
-        foreignField: "_id",
-        as: "user",
-      },
+  pipeline.push({
+    $lookup: {
+      from: "users",
+      let: { userId: "$user" },
+      pipeline: [
+        {
+          $match: {
+            $expr: { $eq: ["$_id", "$$userId"] },
+          },
+        },
+        {
+          $project: {
+            name: 1,
+            email: 1,
+            phone: 1,
+          },
+        },
+      ],
+      as: "user",
     },
-    { $unwind: "$user" },
+  });
 
-    // 💳 Payment (THIS FIXES REFUNDS)
-    {
-      $lookup: {
-        from: "payments",
-        localField: "_id",
-        foreignField: "order",
-        as: "payment",
-      },
+  pipeline.push({
+    $unwind: {
+      path: "$user",
+      preserveNullAndEmptyArrays: true,
     },
-    {
-      $unwind: {
-        path: "$payment",
-        preserveNullAndEmptyArrays: true,
-      },
-    },
-  ];
+  });
 
-  // 🔍 Search by email / name / orderId
   if (search) {
+    const escapedSearch = search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
     pipeline.push({
       $match: {
         $or: [
-          { "user.email": { $regex: search, $options: "i" } },
-          { "user.name": { $regex: search, $options: "i" } },
-          { _id: { $regex: search, $options: "i" } },
+          { "user.email": { $regex: escapedSearch, $options: "i" } },
+          { "user.name": { $regex: escapedSearch, $options: "i" } },
+          {
+            $expr: {
+              $regexMatch: {
+                input: { $toString: "$_id" },
+                regex: escapedSearch,
+                options: "i",
+              },
+            },
+          },
         ],
       },
     });
   }
 
+  pipeline.push({
+    $project: {
+      user: 1,
+      items: 1,
+      totalAmount: 1,
+      paymentStatus: 1,
+      fulfillmentStatus: 1,
+      createdAt: 1,
+      updatedAt: 1,
+    },
+  });
+
   pipeline.push(
     { $sort: { createdAt: -1 } },
     {
       $facet: {
-        data: [{ $skip: skip }, { $limit: Number(limit) }],
+        data: [{ $skip: skip }, { $limit: limitNumber }],
         total: [{ $count: "count" }],
       },
     },
@@ -159,8 +182,8 @@ export const getAllOrders = asyncHandler(async (req, res) => {
     data: orders,
     pagination: {
       total,
-      page: Number(page),
-      pages: Math.ceil(total / limit),
+      page: pageNumber,
+      pages: Math.ceil(total / limitNumber),
     },
   });
 });
@@ -196,7 +219,7 @@ export const getAdminOrderDetail = asyncHandler(async (req, res) => {
     order.payment ||
     (await Payment.findOne({ order: order._id })
       .select(
-        "amount refundedAmount status providerOrderId providerPaymentId finalizationState createdAt updatedAt",
+        "amount refundedAmount status providerOrderId providerPaymentId finalizationState order createdAt updatedAt",
       )
       .lean());
 

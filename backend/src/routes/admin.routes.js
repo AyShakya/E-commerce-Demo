@@ -1,5 +1,12 @@
 import express from "express";
-import { getAdminSummary,getAllRefunds,getPaymentLogsByOrder, getReservations } from "../controllers/admin.controller.js";
+import {
+  getAdminSummary,
+  getAllRefunds,
+  getPaymentLogsByOrder,
+  getReservations,
+  retryFinalizePayment,
+  runAdminReconcile,
+} from "../controllers/admin.controller.js";
 import { protect, adminOnly } from "../middlewares/auth.middleware.js";
 import { adminLimiter } from "../utils/ratelimiter.js";
 
@@ -23,6 +30,8 @@ router.get(
 );
 
 router.get("/refunds", protect, adminOnly, getAllRefunds);
+router.post("/reconcile", protect, adminOnly, runAdminReconcile);
+router.post("/payments/:paymentId/retry-finalize", protect, adminOnly, retryFinalizePayment);
 
 
 export default router;

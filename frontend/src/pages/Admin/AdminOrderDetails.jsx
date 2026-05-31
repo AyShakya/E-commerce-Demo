@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { initiateRefund } from "../../api/admin.payment.api";
+import { initiateRefund, retryFinalizePayment } from "../../api/admin.payment.api";
 
 const STATUS_OPTIONS = ["PENDING", "SHIPPED", "DELIVERED", "CANCELLED"];
 
@@ -11,16 +11,23 @@ export default function AdminOrderDetails({
   statusUpdating,
   onClose,
   onRefresh,
+  onReconcile,
   onChangeStatus,
 }) {
   const [refundAmount, setRefundAmount] = useState("");
   const [refundLoading, setRefundLoading] = useState(false);
   const [refundError, setRefundError] = useState("");
+  const [repairLoading, setRepairLoading] = useState(false);
+  const [repairMessage, setRepairMessage] = useState("");
 
   const orderData = detail?.order || order;
   const payment = detail?.payment || orderData?.payment || null;
   const paymentLogs = detail?.paymentLogs || [];
   const refunds = detail?.refunds || [];
+  const canRetryFinalize =
+    Boolean(payment?._id) &&
+    payment?.finalizationState !== "COMPLETED" &&
+    !payment?.order;
 
   const canRefund =
     orderData?.paymentStatus === "PAID" ||
@@ -62,6 +69,23 @@ export default function AdminOrderDetails({
       setRefundError(err.response?.data?.message || "Refund failed");
     } finally {
       setRefundLoading(false);
+    }
+  };
+
+  const handleRetryFinalize = async () => {
+    if (!payment?._id) return;
+
+    setRepairMessage("");
+
+    try {
+      setRepairLoading(true);
+      const result = await retryFinalizePayment(payment._id);
+      setRepairMessage(result?.message || "Finalization retry completed");
+      await onRefresh?.();
+    } catch (err) {
+      setRepairMessage(err.response?.data?.message || "Retry failed");
+    } finally {
+      setRepairLoading(false);
     }
   };
 
@@ -181,7 +205,21 @@ export default function AdminOrderDetails({
                 </option>
               ))}
             </select>
+
+            {canRetryFinalize && (
+              <button
+                onClick={handleRetryFinalize}
+                disabled={repairLoading}
+                className="border border-white/20 px-4 py-2 text-xs uppercase tracking-[0.2em] hover:border-white/40 disabled:opacity-40 transition"
+              >
+                {repairLoading ? "Retrying…" : "Retry Finalization"}
+              </button>
+            )}
           </div>
+
+          {repairMessage && (
+            <p className="text-xs text-white/50">{repairMessage}</p>
+          )}
         </section>
 
         {/* REFUND – DANGER ZONE */}

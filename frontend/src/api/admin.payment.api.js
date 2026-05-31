@@ -12,3 +12,13 @@ export const initiateRefund = async ({ paymentId, amount }) => {
   });
   return res.data;
 };
+
+export const retryFinalizePayment = async (paymentId) => {
+  const res = await api.post(`/admin/payments/${paymentId}/retry-finalize`);
+  return res.data;
+};
+
+export const runAdminReconcile = async () => {
+  const res = await api.post("/admin/reconcile");
+  return res.data;
+};
