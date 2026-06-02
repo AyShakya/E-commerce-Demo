@@ -202,6 +202,10 @@ export default function Checkout() {
       await holdCurrentStage();
       showPaymentStage("redirecting");
 
+      if (typeof window.Razorpay !== "function") {
+        throw new Error("Razorpay checkout script failed to load");
+      }
+
       const razorpay = new window.Razorpay({
         key: payment.key,
         amount: payment.amount,
