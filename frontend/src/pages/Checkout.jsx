@@ -7,6 +7,7 @@ import {
 } from "../api/payment.api";
 import { fetchProductById } from "../api/product.api";
 import PaymentInstruction from "../components/PaymentInstruction";
+import PaymentOutcomePanel from "../components/PaymentOutcomePanel";
 import PaymentStatusTimeline from "../components/PaymentStatusTimeline";
 import PaymentVerificationNotice from "../components/PaymentVerificationNotice";
 import ProductImage from "../components/ProductImage";
@@ -34,6 +35,8 @@ export default function Checkout() {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [paymentStage, setPaymentStage] = useState(null);
+  const [paymentFailure, setPaymentFailure] = useState(null);
+  const [paymentPending, setPaymentPending] = useState(false);
   const [checkoutStatus, setCheckoutStatus] = useState(null);
   const [statusLoading, setStatusLoading] = useState(false);
   const stageStartedAtRef = useRef(0);
@@ -56,8 +59,10 @@ export default function Checkout() {
     try {
       const status = await getCheckoutStatus(productId);
       setCheckoutStatus(status);
+      return status;
     } catch {
       setCheckoutStatus(null);
+      return null;
     } finally {
       setStatusLoading(false);
     }
@@ -88,6 +93,83 @@ export default function Checkout() {
     setPaymentStage(null);
   }, []);
 
+  const isPaymentPending =
+    paymentPending || checkoutStatus?.finalizationState === "FINALIZING";
+
+  const visibleFailure =
+    paymentFailure ||
+    (checkoutStatus?.paymentStatus === "FAILED"
+      ? {
+          title: "Payment Failed",
+          message: "No amount has been charged.",
+          note: "The payment attempt failed at the gateway. You can retry safely or return to your cart.",
+          where: "Gateway Authorization",
+        }
+      : null);
+
+  const showFailure = useCallback((failure) => {
+    setPaymentPending(false);
+    setPaymentFailure(failure);
+  }, []);
+
+  const clearPaymentOutcome = useCallback(() => {
+    setPaymentFailure(null);
+    setPaymentPending(false);
+  }, []);
+
+  const buildFailure = useCallback(({ err, where, charged = false }) => {
+    if (charged) {
+      return {
+        title: "Order Confirmation Failed",
+        message:
+          "Payment was received, but order confirmation could not finish automatically.",
+        note:
+          err?.response?.data?.message ||
+          "Please do not make another payment. Contact support with your payment reference if this does not resolve shortly.",
+        where,
+        canRetry: false,
+      };
+    }
+
+    return {
+      title: "Payment Failed",
+      message: "No amount has been charged.",
+      note:
+        err?.response?.data?.message ||
+        "The payment attempt did not complete. You can retry payment safely or return to your cart.",
+      where,
+      canRetry: true,
+    };
+  }, []);
+
+  const refreshPendingStatus = async () => {
+    const status = await loadCheckoutStatus();
+
+    if (status?.state === "COMPLETED") {
+      navigate("/dashboard");
+      return;
+    }
+
+    if (status?.paymentStatus === "FAILED") {
+      showFailure(buildFailure({ where: "Gateway Authorization" }));
+      return;
+    }
+
+    if (status?.finalizationState !== "FINALIZING") {
+      setPaymentPending(false);
+    }
+  };
+
+  const retryPayment = () => {
+    clearPaymentOutcome();
+    handlePayment();
+  };
+
+  const returnToCart = () => {
+    clearPaymentOutcome();
+    navigate("/cart");
+  };
+
   const releaseCheckout = async () => {
     if (!productId) {
       navigate("/products");
@@ -111,6 +193,7 @@ export default function Checkout() {
       return;
     }
     if (!user.address || processing) return;
+    clearPaymentOutcome();
     setProcessing(true);
     showPaymentStage("creating");
 
@@ -135,6 +218,7 @@ export default function Checkout() {
 
             if (result?.processing) {
               resetPaymentProgress();
+              setPaymentPending(true);
               await loadCheckoutStatus();
               return;
             }
@@ -145,10 +229,7 @@ export default function Checkout() {
             await holdCurrentStage(ORDER_CONFIRMED_MIN_MS);
             navigate("/dashboard");
           } catch (err) {
-            alert(
-              err.response?.data?.message ||
-                "Payment succeeded but order confirmation failed. Please contact support with your payment reference.",
-            );
+            showFailure(buildFailure({ err, where: "Order Confirmation", charged: true }));
             resetPaymentProgress();
             await loadCheckoutStatus();
           }
@@ -169,11 +250,24 @@ export default function Checkout() {
         theme: { color: "#000000" },
       });
 
+      if (typeof razorpay.on === "function") {
+        razorpay.on("payment.failed", async (response) => {
+          showFailure(
+            buildFailure({
+              err: { response: { data: { message: response?.error?.description } } },
+              where: "Gateway Authorization",
+            }),
+          );
+          resetPaymentProgress();
+          await loadCheckoutStatus();
+        });
+      }
+
       await holdCurrentStage();
       razorpay.open();
       showPaymentStage("waiting");
     } catch (err) {
-      alert(err.response?.data?.message || "Payment initiation failed");
+      showFailure(buildFailure({ err, where: "Order Creation" }));
       resetPaymentProgress();
       await loadCheckoutStatus();
     }
@@ -320,12 +414,20 @@ export default function Checkout() {
             </section>
 
             <PaymentInstruction />
+            <PaymentOutcomePanel
+              type={visibleFailure ? "failure" : isPaymentPending ? "pending" : null}
+              detail={visibleFailure}
+              onRetry={retryPayment}
+              onReturnToCart={returnToCart}
+              onRefreshStatus={refreshPendingStatus}
+              refreshing={statusLoading}
+            />
             <PaymentVerificationNotice activeStage={paymentStage} />
             <PaymentStatusTimeline activeStage={paymentStage} />
 
             {/* PAYMENT CTAs */}
             <div className="space-y-8 w-full">
-              {statusLoading ? (
+              {visibleFailure || isPaymentPending ? null : statusLoading ? (
                 <p className="text-[10px] tracking-[0.3em] uppercase text-white/40">
                   Authenticating session...
                 </p>

@@ -63,6 +63,7 @@ const getReservationStatusPayload = (reservation, payment) => {
     reservationId: reservation?._id || null,
     paymentId: payment?._id || null,
     paymentStatus: payment?.status || null,
+    finalizationState: payment?.finalizationState || null,
     providerOrderId: payment?.providerOrderId || null,
     expiresAt,
     remainingSeconds,
