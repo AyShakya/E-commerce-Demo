@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 function escapeXml(value = "") {
   return String(value)
@@ -62,18 +62,16 @@ export default function ProductImage({
   ...props
 }) {
   const fallbackSrc = useMemo(() => buildPlaceholder(title, category), [title, category]);
-  const [resolvedSrc, setResolvedSrc] = useState(src || fallbackSrc);
-
-  useEffect(() => {
-    setResolvedSrc(src || fallbackSrc);
-  }, [src, fallbackSrc]);
+  const [hasError, setHasError] = useState(false);
+  const resolvedSrc = !src || hasError ? fallbackSrc : src;
 
   return (
     <img
+      key={src || fallbackSrc}
       src={resolvedSrc}
       alt={alt || title || "Product image"}
       className={className}
-      onError={() => setResolvedSrc(fallbackSrc)}
+      onError={() => setHasError(true)}
       {...props}
     />
   );

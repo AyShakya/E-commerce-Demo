@@ -6,7 +6,7 @@ import UserDashboard from "./User/UserDashboard";
 export default function Dashboard() {
   const { user } = useAuth();
 
-  if (!user) return nul
+  if (!user) return null;
   
   if (user.role === "admin") {
     return <AdminDashboard />;

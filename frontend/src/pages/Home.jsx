@@ -6,15 +6,6 @@ import ProductImage from "../components/ProductImage";
 export default function Home() {
   const [featured, setFeatured] = useState([]);
 
-  async function loadFeatured() {
-    try {
-      const res = await fetchProducts({ page: 1, limit: 6 });
-      setFeatured(res.data);
-    } catch {
-      console.error("Failed to load featured products");
-    }
-  }
-
   useEffect(() => {
     document.title = "Demo — Contemporary Fashion";
   }, []);
@@ -22,7 +13,21 @@ export default function Home() {
   const scrollToTop = useCallback(() => window.scrollTo({ top: 0, behavior: "smooth" }), []);
 
   useEffect(() => {
-    loadFeatured();
+    let cancelled = false;
+
+    void fetchProducts({ page: 1, limit: 6 })
+      .then((res) => {
+        if (!cancelled) {
+          setFeatured(res.data);
+        }
+      })
+      .catch(() => {
+        console.error("Failed to load featured products");
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const CATEGORIES = [

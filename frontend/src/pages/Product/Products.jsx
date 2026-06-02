@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { fetchProducts } from "../../api/product.api";
 import useDebounce from "../../hooks/useDebounce";
@@ -28,30 +28,13 @@ export default function Products() {
   const [category, setCategory] = useState(
     initialCategory && CATEGORIES.includes(initialCategory) ? initialCategory : "All"
   );
+  const loadingRef = useRef(false);
 
   const debouncedSearch = useDebounce(search, 400);
 
-  useEffect(() => {
-    setPage(1);
-    loadProducts(1, true);
-  }, [debouncedSearch, sort, category]);
-
-  useEffect(() => {
-    const queryCategory = searchParams.get("category");
-    if (queryCategory && CATEGORIES.includes(queryCategory) && queryCategory !== category) {
-      setCategory(queryCategory);
-    }
-    if (!queryCategory && category !== "All") {
-      setCategory("All");
-    }
-  }, [searchParams, category]);
-
-  useEffect(() => {
-    if (page > 1) loadProducts(page);
-  }, [page]);
-
-  const loadProducts = async (pageToLoad, replace = false) => {
-    if (loading) return;
+  const loadProducts = useCallback(async (pageToLoad, replace = false) => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     setLoading(true);
 
     try {
@@ -69,10 +52,30 @@ export default function Products() {
     } catch (error) {
       console.error("Archive fetch error:", error);
     } finally {
+      loadingRef.current = false;
       setLoading(false);
       setInitialLoading(false);
     }
-  };
+  }, [debouncedSearch, sort, category]);
+
+  useEffect(() => {
+    setPage(1);
+    void loadProducts(1, true);
+  }, [debouncedSearch, sort, category, loadProducts]);
+
+  useEffect(() => {
+    const queryCategory = searchParams.get("category");
+    if (queryCategory && CATEGORIES.includes(queryCategory) && queryCategory !== category) {
+      setCategory(queryCategory);
+    }
+    if (!queryCategory && category !== "All") {
+      setCategory("All");
+    }
+  }, [searchParams, category]);
+
+  useEffect(() => {
+    if (page > 1) void loadProducts(page);
+  }, [page, loadProducts]);
 
   const resetFilters = () => {
     setSearch("");

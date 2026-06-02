@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { fetchProductById } from "../../api/product.api";
 import { addToCart } from "../../api/cart.api";
@@ -14,11 +14,7 @@ export default function ProductDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    loadProduct();
-  }, [id]);
-
-  const loadProduct = async () => {
+  const loadProduct = useCallback(async () => {
     try {
       const data = await fetchProductById(id);
       setProduct(data);
@@ -27,7 +23,11 @@ export default function ProductDetails() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    void loadProduct();
+  }, [loadProduct]);
 
   const increment = () => { if (quantity < product.quantity) setQuantity((q) => q + 1); };
   const decrement = () => { if (quantity > 1) setQuantity((q) => q - 1); };

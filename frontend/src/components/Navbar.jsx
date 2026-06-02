@@ -1,30 +1,31 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Close mobile menu when route changes
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [location.pathname]);
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   const handleLogout = async () => {
     await logout();
     navigate("/login");
+    closeMobileMenu();
   };
 
   // Prevent scrolling when menu is open
   useEffect(() => {
     if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
+
+    return () => {
+      document.body.style.overflow = "unset";
+    };
   }, [isMobileMenuOpen]);
 
   // Shared Styles
@@ -104,7 +105,7 @@ export default function Navbar() {
           className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-500 ease-in-out ${
             isMobileMenuOpen ? "opacity-100" : "opacity-0"
           }`}
-          onClick={() => setIsMobileMenuOpen(false)}
+          onClick={closeMobileMenu}
         />
 
         {/* Sidebar Panel */}
@@ -116,7 +117,7 @@ export default function Navbar() {
           {/* Sidebar Header (Close Button) */}
           <div className="h-16 flex items-center justify-end px-6 border-b border-black/[0.03]">
             <button 
-              onClick={() => setIsMobileMenuOpen(false)}
+              onClick={closeMobileMenu}
               className="p-2 -mr-2 group"
             >
               <div className="relative w-6 h-6 flex items-center justify-center">
@@ -131,9 +132,9 @@ export default function Navbar() {
             
             {/* Primary Links */}
             <div className="flex flex-col items-center gap-8 w-full">
-              <Link to="/" className={mobileLinkClass}>Home</Link>
-              <Link to="/products" className={mobileLinkClass}>Collection</Link>
-              <Link to="/contact" className={mobileLinkClass}>Studio</Link>
+              <Link to="/" onClick={closeMobileMenu} className={mobileLinkClass}>Home</Link>
+              <Link to="/products" onClick={closeMobileMenu} className={mobileLinkClass}>Collection</Link>
+              <Link to="/contact" onClick={closeMobileMenu} className={mobileLinkClass}>Studio</Link>
             </div>
 
             {/* Decorative Divider */}
@@ -143,8 +144,8 @@ export default function Navbar() {
             <div className="flex flex-col items-center gap-6 w-full">
               {user ? (
                 <>
-                  <Link to="/cart" className={mobileSubLinkClass}>Bag</Link>
-                  <Link to="/dashboard" className={mobileSubLinkClass}>Account</Link>
+                  <Link to="/cart" onClick={closeMobileMenu} className={mobileSubLinkClass}>Bag</Link>
+                  <Link to="/dashboard" onClick={closeMobileMenu} className={mobileSubLinkClass}>Account</Link>
                   <button
                     onClick={handleLogout}
                     className="text-xs uppercase tracking-[0.15em] font-medium text-red-500 mt-4 hover:text-red-700 transition-colors"
@@ -154,9 +155,10 @@ export default function Navbar() {
                 </>
               ) : (
                 <>
-                  <Link to="/login" className={mobileSubLinkClass}>Sign In</Link>
+                  <Link to="/login" onClick={closeMobileMenu} className={mobileSubLinkClass}>Sign In</Link>
                   <Link
                     to="/register"
+                    onClick={closeMobileMenu}
                     className="mt-2 px-8 py-3 bg-black text-white text-xs uppercase tracking-[0.2em] font-bold hover:bg-gray-800 transition-all active:scale-95"
                   >
                     Join Us

@@ -11,7 +11,6 @@ export default function AdminOrderDetails({
   statusUpdating,
   onClose,
   onRefresh,
-  onReconcile,
   onChangeStatus,
 }) {
   const [refundAmount, setRefundAmount] = useState("");
