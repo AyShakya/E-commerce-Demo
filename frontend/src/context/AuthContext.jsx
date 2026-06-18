@@ -37,6 +37,15 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     loadUser();
+
+    const handleGlobalLogout = () => {
+      setUser(null);
+    };
+
+    window.addEventListener("auth-logout", handleGlobalLogout);
+    return () => {
+      window.removeEventListener("auth-logout", handleGlobalLogout);
+    };
   }, []);
 
   const login = async (credentials) => {

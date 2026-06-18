@@ -75,6 +75,7 @@ api.interceptors.response.use(
       /* 🛑 Hard stop if already tried */
       if (refreshAttempts >= MAX_REFRESH_ATTEMPTS) {
         localStorage.removeItem("accessToken");
+        window.dispatchEvent(new Event("auth-logout"));
         return Promise.reject(error);
       }
 
@@ -107,6 +108,7 @@ api.interceptors.response.use(
         /* ❌ Refresh failed → logout */
         processQueue(err, null);
         localStorage.removeItem("accessToken");
+        window.dispatchEvent(new Event("auth-logout"));
         return Promise.reject(err);
       } finally {
         isRefreshing = false;

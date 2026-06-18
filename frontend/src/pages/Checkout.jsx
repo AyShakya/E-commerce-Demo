@@ -39,6 +39,7 @@ export default function Checkout() {
   const [paymentPending, setPaymentPending] = useState(false);
   const [checkoutStatus, setCheckoutStatus] = useState(null);
   const [statusLoading, setStatusLoading] = useState(false);
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
   const stageStartedAtRef = useRef(0);
 
   useEffect(() => {
@@ -71,6 +72,30 @@ export default function Checkout() {
   useEffect(() => {
     loadCheckoutStatus();
   }, [loadCheckoutStatus]);
+
+  // Sync remainingSeconds state with API payload
+  useEffect(() => {
+    if (checkoutStatus) {
+      setRemainingSeconds(checkoutStatus.remainingSeconds || 0);
+    }
+  }, [checkoutStatus]);
+
+  // Handle browser-side real-time countdown decrement
+  useEffect(() => {
+    if (remainingSeconds <= 0) return;
+
+    const interval = setInterval(() => {
+      setRemainingSeconds((prev) => {
+        if (prev <= 1) {
+          loadCheckoutStatus();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [remainingSeconds, loadCheckoutStatus]);
 
   const total = product ? product.price * quantity : 0;
 
@@ -447,8 +472,8 @@ export default function Checkout() {
                   <p className="text-xs text-white/60 leading-relaxed italic">
                     This piece is currently reserved for you. Your session expires in {" "}
                     <span className="text-white font-bold not-italic tracking-widest">
-                      {Math.floor(checkoutStatus.remainingSeconds / 60)}:
-                      {String(checkoutStatus.remainingSeconds % 60).padStart(2, '0')}
+                      {Math.floor(remainingSeconds / 60)}:
+                      {String(remainingSeconds % 60).padStart(2, '0')}
                     </span>.
                   </p>
 

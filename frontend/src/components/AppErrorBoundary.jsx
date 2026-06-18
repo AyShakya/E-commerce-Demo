@@ -33,12 +33,12 @@ export default class AppErrorBoundary extends React.Component {
               >
                 Reload Page
               </button>
-              <Link
-                to="/"
-                className="px-6 py-3 border border-white/30 text-[10px] uppercase tracking-[0.3em] hover:bg-white hover:text-black transition-all"
+              <a
+                href="/"
+                className="px-6 py-3 border border-white/30 text-[10px] uppercase tracking-[0.3em] hover:bg-white hover:text-black transition-all text-center inline-block"
               >
                 Go Home
-              </Link>
+              </a>
             </div>
           </div>
         </main>
