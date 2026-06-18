@@ -252,25 +252,26 @@ export const createPayment = asyncHandler(async (req, res) => {
       // 2️⃣ If stock is low, try "Surgical Reclamation" before giving up
       await reclaimExpiredStock(productId);
 
-      session.endSession();
-
-      const retriedProduct = await Product.findOneAndUpdate(
-        {
-          _id: productId,
-          isActive: true,
-          quantity: { $gte: quantity },
-        },
-        { $inc: { quantity: -quantity } },
-        { new: true },
-      );
-
-      if (!retriedProduct) {
-        return res.status(400).json({ message: "Insufficient stock. This item may be locked in other checkout sessions." });
-      }
+      await session.endSession();
+      session = null;
 
       const retrySession = await mongoose.startSession();
       try {
         await retrySession.withTransaction(async () => {
+          const retriedProduct = await Product.findOneAndUpdate(
+            {
+              _id: productId,
+              isActive: true,
+              quantity: { $gte: quantity },
+            },
+            { $inc: { quantity: -quantity } },
+            { new: true, session: retrySession },
+          );
+
+          if (!retriedProduct) {
+            throw new Error("INSUFFICIENT_STOCK_RETRY");
+          }
+
           product = retriedProduct;
           expiresAt = new Date(Date.now() + RESERVATION_MINUTES * 60 * 1000);
 
@@ -301,11 +302,17 @@ export const createPayment = asyncHandler(async (req, res) => {
           reservation.payment = payment._id;
           await reservation.save({ session: retrySession });
         });
+      } catch (retryError) {
+        if (retryError.message === "INSUFFICIENT_STOCK_RETRY") {
+          return res.status(400).json({ message: "Insufficient stock. This item may be locked in other checkout sessions." });
+        }
+        throw retryError;
       } finally {
         await retrySession.endSession();
       }
     } else {
       await session.endSession();
+      session = null;
       throw error;
     }
   } finally {

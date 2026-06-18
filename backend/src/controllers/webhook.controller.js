@@ -123,15 +123,20 @@ export const razorpayWebhook = asyncHandler(async (req, res) => {
       const order = await Order.findById(payment.order);
 
       if (order) {
+        const wasAlreadyFullyRefunded = order.paymentStatus === "REFUNDED";
+
         order.paymentStatus =
           payment.status === "REFUNDED" ? "REFUNDED" : "PARTIALLY_REFUNDED";
         await order.save();
 
-        // 🔄 Restore inventory on refund
-        for (const item of order.items) {
-          await Product.findByIdAndUpdate(item.product, {
-            $inc: { quantity: item.quantity },
-          });
+        // 🔄 Restore inventory on refund ONLY when the order becomes FULLY REFUNDED,
+        // and only if we haven't already restored stock for this order.
+        if (order.paymentStatus === "REFUNDED" && !wasAlreadyFullyRefunded) {
+          for (const item of order.items) {
+            await Product.findByIdAndUpdate(item.product, {
+              $inc: { quantity: item.quantity },
+            });
+          }
         }
       }
 
