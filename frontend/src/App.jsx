@@ -7,7 +7,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import AppErrorBoundary from "./components/AppErrorBoundary";
 import TermsAndConditions from "./pages/Legal/TermsAndConditions";
 import RefundPolicy from "./pages/Legal/RefundPolicy";
-import PrivacyPolicy from "./pages/Legal/PrivacyPolicy";
+import PrivacyPolicy from "./pages/Legal/DataPolicy";
 import About from "./pages/Legal/About";
 
 // Lazy-loaded pages
