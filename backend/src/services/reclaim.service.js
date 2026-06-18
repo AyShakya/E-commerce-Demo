@@ -1,5 +1,6 @@
 import Reservation from "../models/Reservation.model.js";
 import Product from "../models/Product.model.js";
+import Payment from "../models/Payment.model.js";
 import { logPaymentEvent } from "./paymentAudit.service.js";
 
 /**
@@ -35,6 +36,12 @@ export const reclaimExpiredStock = async (productId = null) => {
             await Product.findByIdAndUpdate(updated.product, {
               $inc: { quantity: updated.quantity },
             });
+
+            if (updated.payment) {
+              await Payment.findByIdAndUpdate(updated.payment, {
+                $set: { status: "FAILED" },
+              });
+            }
 
             await logPaymentEvent({
               user: updated.user,

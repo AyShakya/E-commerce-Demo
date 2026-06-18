@@ -30,6 +30,12 @@ const expireReservationAndRestock = async (reservation, reason = "AUTO_EXPIRED")
     $inc: { quantity: updated.quantity },
   });
 
+  if (updated.payment) {
+    await Payment.findByIdAndUpdate(updated.payment, {
+      $set: { status: "FAILED" },
+    });
+  }
+
   await logPaymentEvent({
     order: null,
     user: updated.user,
@@ -144,6 +150,10 @@ export const createPayment = asyncHandler(async (req, res) => {
 
   if (!productId || !quantity || quantity < 1) {
     return res.status(400).json({ message: "Invalid request" });
+  }
+
+  if (!razorpay) {
+    return res.status(503).json({ message: "Payment gateway is not configured on this server" });
   }
 
   // Idempotency: Find existing active reservation
