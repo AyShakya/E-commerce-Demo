@@ -14,7 +14,7 @@ export default function RefundPolicy() {
           to="/"
           className="inline-flex items-center gap-2 text-[10px] tracking-[0.4em] uppercase text-gray-500 hover:text-white transition-colors duration-300 mb-16"
         >
-          &larr; Back to Home
+          ← Back to Home
         </Link>
 
         {/* Title */}

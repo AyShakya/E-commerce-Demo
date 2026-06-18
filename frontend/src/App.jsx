@@ -5,6 +5,10 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import ScrollToTop from "./components/ScrollToTop";
 import AppErrorBoundary from "./components/AppErrorBoundary";
+import TermsAndConditions from "./pages/Legal/TermsAndConditions";
+import RefundPolicy from "./pages/Legal/RefundPolicy";
+import PrivacyPolicy from "./pages/Legal/PrivacyPolicy";
+import About from "./pages/Legal/About";
 
 // Lazy-loaded pages
 const Home = lazy(() => import("./pages/Home"));
@@ -17,10 +21,6 @@ const Checkout = lazy(() => import("./pages/Checkout"));
 const Cart = lazy(() => import("./pages/User/Cart"));
 const Contact = lazy(() => import("./pages/Contact"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const TermsAndConditions = lazy(() => import("./pages/Legal/TermsAndConditions"));
-const RefundPolicy = lazy(() => import("./pages/Legal/RefundPolicy"));
-const PrivacyPolicy = lazy(() => import("./pages/Legal/PrivacyPolicy"));
-const About = lazy(() => import("./pages/Legal/About"));
 
 function App() {
   return (

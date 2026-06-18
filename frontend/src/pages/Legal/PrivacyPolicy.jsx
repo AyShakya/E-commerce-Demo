@@ -26,7 +26,7 @@ export default function PrivacyPolicy() {
 
         {/* Intro */}
         <p className="text-sm md:text-base text-gray-300 leading-relaxed mb-16">
-          [Your Brand Name] (&ldquo;we&rdquo;, &ldquo;us&rdquo;) respects your
+          [Your Brand Name] ("we", "us") respects your
           privacy. This page explains what information we collect when you use
           our website and how we use it.
         </p>
@@ -212,7 +212,7 @@ export default function PrivacyPolicy() {
             </h2>
             <p className="text-sm md:text-base text-gray-300 leading-relaxed">
               We may update this privacy policy from time to time. Changes will
-              be posted on this page with an updated &ldquo;last updated&rdquo;
+              be posted on this page with an updated "last updated"
               date.
             </p>
           </section>
