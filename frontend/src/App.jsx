@@ -17,6 +17,10 @@ const Checkout = lazy(() => import("./pages/Checkout"));
 const Cart = lazy(() => import("./pages/User/Cart"));
 const Contact = lazy(() => import("./pages/Contact"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const TermsAndConditions = lazy(() => import("./pages/Legal/TermsAndConditions"));
+const RefundPolicy = lazy(() => import("./pages/Legal/RefundPolicy"));
+const PrivacyPolicy = lazy(() => import("./pages/Legal/PrivacyPolicy"));
+const About = lazy(() => import("./pages/Legal/About"));
 
 function App() {
   return (
@@ -71,6 +75,11 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
+            <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+            <Route path="/refund-policy" element={<RefundPolicy />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/about" element={<About />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

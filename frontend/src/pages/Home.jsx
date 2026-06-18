@@ -245,7 +245,7 @@ export default function Home() {
       {/* FOOTER */}
       <footer className="border-t border-white/5 py-32 px-8 bg-[#080808]">
         <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-16 mb-24">
+          <div className="grid md:grid-cols-5 gap-16 mb-24">
             <div className="col-span-1 md:col-span-1">
               <h2 className="text-2xl font-serif italic mb-8">Demo</h2>
               <p className="text-[11px] text-gray-500 tracking-widest leading-relaxed uppercase">
@@ -262,8 +262,16 @@ export default function Home() {
             <div>
               <h4 className="text-[10px] tracking-[0.4em] uppercase mb-8 text-gray-400">Company</h4>
               <ul className="space-y-4 text-[10px] text-gray-500 tracking-widest uppercase">
-                <li><a href="#" className="hover:text-white transition">Sustainability</a></li>
-                <li><a href="#" className="hover:text-white transition">Fabric Care</a></li>
+                <li><Link to="/about" onClick={scrollToTop} className="hover:text-white transition">About Us</Link></li>
+                <li><Link to="/contact" onClick={scrollToTop} className="hover:text-white transition">Contact</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-[10px] tracking-[0.4em] uppercase mb-8 text-gray-400">Legal</h4>
+              <ul className="space-y-4 text-[10px] text-gray-500 tracking-widest uppercase">
+                <li><Link to="/terms-and-conditions" onClick={scrollToTop} className="hover:text-white transition">Terms & Conditions</Link></li>
+                <li><Link to="/refund-policy" onClick={scrollToTop} className="hover:text-white transition">Refund Policy</Link></li>
+                <li><Link to="/privacy-policy" onClick={scrollToTop} className="hover:text-white transition">Privacy Policy</Link></li>
               </ul>
             </div>
             <div>
@@ -278,9 +286,10 @@ export default function Home() {
             <p className="text-[9px] tracking-[0.5em] uppercase text-gray-600">
               © {new Date().getFullYear()} Demo STUDIO
             </p>
-            <div className="flex gap-12 text-[9px] tracking-[0.5em] uppercase text-gray-600">
-              <a href="#" className="hover:text-white transition">Privacy</a>
-              <a href="#" className="hover:text-white transition">Accessibility</a>
+            <div className="flex flex-wrap justify-center gap-x-12 gap-y-3 text-[9px] tracking-[0.5em] uppercase text-gray-600">
+              <Link to="/privacy-policy" onClick={scrollToTop} className="hover:text-white transition">Privacy</Link>
+              <Link to="/terms-and-conditions" onClick={scrollToTop} className="hover:text-white transition">Terms</Link>
+              <Link to="/refund-policy" onClick={scrollToTop} className="hover:text-white transition">Refunds</Link>
             </div>
           </div>
         </div>

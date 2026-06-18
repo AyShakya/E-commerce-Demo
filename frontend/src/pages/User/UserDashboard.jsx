@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../api/axios";
 import UserOrders from "./UserOrders";
@@ -170,12 +171,29 @@ export default function UserDashboard() {
                       Protocol 07
                     </span>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <h3 className="text-xl font-serif italic text-slate-100">Refund Policy Notice</h3>
                     <p className="text-[13px] text-slate-100/70 leading-relaxed tracking-wide font-light max-w-2xl">
-                      Refunds are strictly processed <span className="text-slate-100 font-bold border-b border-slate-200/30">pre-dispatch</span>. Once the archive item is in transit, the manifest is locked. 
-                      For urgent signals, contact <span className="text-slate-100 font-bold cursor-pointer hover:underline underline-offset-4 decoration-white/50"> Support</span>.
+                      Refunds are strictly processed <span className="text-slate-100 font-bold border-b border-slate-200/30">pre-dispatch</span>. Once the archive item is in transit, the manifest is locked.
+                      For complete details on cancellations, returns, and eligibility, please refer to our{" "}
+                      <Link to="/refund-policy" className="text-slate-100 font-bold border-b border-slate-200/40 hover:border-slate-200 transition-colors duration-300">Refund Policy</Link> page.
                     </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-4 pt-2">
+                    <Link
+                      to="/contact"
+                      className="inline-flex items-center gap-2 text-[9px] tracking-[0.4em] uppercase font-bold text-slate-100/60 hover:text-slate-100 border border-slate-200/15 hover:border-slate-200/40 px-5 py-3 transition-all duration-500 group"
+                    >
+                      <span>Contact Support</span>
+                      <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
+                    </Link>
+                    <Link
+                      to="/refund-policy"
+                      className="inline-flex items-center gap-2 text-[9px] tracking-[0.4em] uppercase font-bold text-slate-100/60 hover:text-slate-100 border border-slate-200/15 hover:border-slate-200/40 px-5 py-3 transition-all duration-500 group"
+                    >
+                      <span>Refund Policy</span>
+                      <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
+                    </Link>
                   </div>
                 </div>
               </div>
