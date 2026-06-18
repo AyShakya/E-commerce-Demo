@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 export default function PrivacyPolicy() {
   useEffect(() => {
-    document.title = "Privacy Policy — Demo";
+    document.title = "Privacy Policy — Utaran";
   }, []);
 
   return (
@@ -235,7 +235,7 @@ export default function PrivacyPolicy() {
         {/* Footer divider */}
         <div className="mt-24 pt-8 border-t border-white/10">
           <p className="text-[10px] tracking-[0.4em] uppercase text-gray-500">
-            Demo — Privacy Policy
+            Utaran — Privacy Policy
           </p>
         </div>
       </div>

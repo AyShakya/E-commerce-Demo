@@ -44,7 +44,7 @@ export default function Login() {
             Identity Access
           </span>
           <h1 className="text-6xl font-serif italic tracking-tighter text-slate-100 mb-2">
-            Demo
+            Utaran
           </h1>
           <div className="w-px h-12 bg-gradient-to-b from-slate-100/20 to-transparent mx-auto mt-6" />
         </div>

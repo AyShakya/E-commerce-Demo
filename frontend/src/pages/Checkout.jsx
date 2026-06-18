@@ -235,7 +235,7 @@ export default function Checkout() {
         key: payment.key,
         amount: payment.amount,
         currency: payment.currency,
-        name: "Demo Studio",
+        name: "Utaran Studio",
         description: `Archive Procurement: ${product.title}`,
         order_id: payment.razorpayOrderId,
         handler: async (response) => {
@@ -543,7 +543,7 @@ export default function Checkout() {
 
       {/* FOOTER */}
       <footer className="mt-auto w-full px-16 py-10 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] tracking-[0.8em] uppercase text-white/30 font-bold">
-        <span>Demo Studio © 2026</span>
+        <span>Utaran Studio © 2026</span>
         <span className="hidden sm:block">Archive Management Protocol</span>
       </footer>
     </main>

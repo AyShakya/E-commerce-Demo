@@ -44,7 +44,7 @@ export default function Navbar() {
           {/* Brand Identity */}
           <Link to="/" className="group flex flex-col items-center justify-center z-50">
             <span className="font-serif italic text-2xl text-black tracking-tighter group-hover:opacity-70 transition-opacity">
-              Demo
+              Utaran
             </span>
           </Link>
 
@@ -171,7 +171,7 @@ export default function Navbar() {
           {/* Sidebar Footer */}
           <div className="py-8 text-center border-t border-black/[0.03]">
             <span className="font-serif italic text-xl text-black tracking-tighter opacity-30">
-              Demo
+              Utaran
             </span>
           </div>
         </div>

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 export default function RefundPolicy() {
   useEffect(() => {
-    document.title = "Refund & Cancellation Policy — Demo";
+    document.title = "Refund & Cancellation Policy — Utaran";
   }, []);
 
   return (

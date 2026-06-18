@@ -9,8 +9,8 @@ function escapeXml(value = "") {
     .replaceAll("'", "&apos;");
 }
 
-function buildPlaceholder(title = "Demo Archive", category = "Signature Piece") {
-  const safeTitle = title.trim() || "Demo Archive";
+function buildPlaceholder(title = "Utaran Archive", category = "Signature Piece") {
+  const safeTitle = title.trim() || "Utaran Archive";
   const safeCategory = category.trim() || "Signature Piece";
   const initials = safeTitle
     .split(/\s+/)
@@ -46,7 +46,7 @@ function buildPlaceholder(title = "Demo Archive", category = "Signature Piece") 
       <text x="50%" y="42%" text-anchor="middle" fill="#ffffff" fill-opacity="0.9" font-family="Inter, Arial, sans-serif" font-size="120" font-weight="700" letter-spacing="12">${escapeXml(initials)}</text>
       <text x="50%" y="58%" text-anchor="middle" fill="#ffffff" fill-opacity="0.72" font-family="Inter, Arial, sans-serif" font-size="30" letter-spacing="6">${escapeXml(safeTitle)}</text>
       <text x="50%" y="63.5%" text-anchor="middle" fill="#ffffff" fill-opacity="0.42" font-family="Inter, Arial, sans-serif" font-size="18" letter-spacing="8" text-transform="uppercase">${escapeXml(safeCategory)}</text>
-      <text x="50%" y="84%" text-anchor="middle" fill="#ffffff" fill-opacity="0.24" font-family="Inter, Arial, sans-serif" font-size="15" letter-spacing="10" text-transform="uppercase">Demo Archive</text>
+      <text x="50%" y="84%" text-anchor="middle" fill="#ffffff" fill-opacity="0.24" font-family="Inter, Arial, sans-serif" font-size="15" letter-spacing="10" text-transform="uppercase">Utaran Archive</text>
     </svg>
   `;
 
