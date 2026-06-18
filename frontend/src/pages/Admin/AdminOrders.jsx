@@ -151,7 +151,7 @@ export default function AdminOrders() {
         </div>
       )}
 
-      <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-2">
+      <div className={`space-y-4 max-h-[65vh] overflow-y-auto pr-2 transition-opacity duration-300 ${loading ? "opacity-50 pointer-events-none" : ""}`}>
         {loading ? (
           <p className="text-white/60 text-sm">Loading orders…</p>
         ) : orders.length === 0 ? (

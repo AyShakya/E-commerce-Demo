@@ -22,33 +22,39 @@ export const reclaimExpiredStock = async (productId = null) => {
 
     if (expiredReservations.length === 0) return 0;
 
-    let reclaimedTotal = 0;
+    const results = await Promise.all(
+      expiredReservations.map(async (res) => {
+        try {
+          const updated = await Reservation.findOneAndUpdate(
+            { _id: res._id, status: "ACTIVE" },
+            { $set: { status: "EXPIRED" } },
+            { new: true }
+          );
 
-    for (const res of expiredReservations) {
-      // Use findOneAndUpdate to ensure we don't double-process in a race condition
-      const updated = await Reservation.findOneAndUpdate(
-        { _id: res._id, status: "ACTIVE" },
-        { $set: { status: "EXPIRED" } },
-        { new: true }
-      );
+          if (updated) {
+            await Product.findByIdAndUpdate(updated.product, {
+              $inc: { quantity: updated.quantity },
+            });
 
-      if (updated) {
-        await Product.findByIdAndUpdate(updated.product, {
-          $inc: { quantity: updated.quantity },
-        });
+            await logPaymentEvent({
+              user: updated.user,
+              eventType: "AUTO_RECLAIMED",
+              metadata: {
+                reservationId: updated._id,
+                productId: updated.product,
+                quantity: updated.quantity,
+              },
+            });
+            return updated.quantity;
+          }
+        } catch (err) {
+          console.error("[Reclaim Utility] Error restocking reservation:", res._id, err);
+        }
+        return 0;
+      })
+    );
 
-        await logPaymentEvent({
-          user: updated.user,
-          eventType: "AUTO_RECLAIMED",
-          metadata: {
-            reservationId: updated._id,
-            productId: updated.product,
-            quantity: updated.quantity,
-          },
-        });
-        reclaimedTotal += updated.quantity;
-      }
-    }
+    const reclaimedTotal = results.reduce((sum, qty) => sum + qty, 0);
 
     return reclaimedTotal;
   } catch (error) {

@@ -270,7 +270,7 @@ export const getAdminProducts = asyncHandler(async (req, res) => {
 
   const [products, total] = await Promise.all([
     Product.find(query)
-      .select("title price quantity images isActive category createdAt updatedAt")
+      .select("title price quantity images isActive category description tags createdAt updatedAt")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNumber)

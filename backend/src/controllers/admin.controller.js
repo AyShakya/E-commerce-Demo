@@ -16,9 +16,11 @@ const FINALIZATION_LOCK_TTL_MS = Number(
 );
 
 export const getAdminSummary = asyncHandler(async (req, res) => {
-  const totalOrders = await Order.countDocuments();
-  const totalUsers = await User.countDocuments({ role: "user" });
-  const totalProducts = await Product.countDocuments({ isActive: true });
+  const [totalOrders, totalUsers, totalProducts] = await Promise.all([
+    Order.countDocuments(),
+    User.countDocuments({ role: "user" }),
+    Product.countDocuments({ isActive: true }),
+  ]);
 
   res.json({
     totalOrders,

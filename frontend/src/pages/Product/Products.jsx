@@ -195,7 +195,7 @@ export default function Products() {
         </div>
 
         {/* STAGGERED GRID */}
-        <div className="stagger-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-24 mb-32">
+        <div className={`stagger-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-24 mb-32 transition-opacity duration-300 ${loading && !initialLoading ? "opacity-50 pointer-events-none" : ""}`}>
           {initialLoading
             ? Array.from({ length: 6 }).map((_, i) => <ProductSkeleton key={i} />)
             : products.map((p, idx) => (

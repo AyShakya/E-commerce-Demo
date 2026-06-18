@@ -138,6 +138,7 @@ export const getAllOrders = asyncHandler(async (req, res) => {
         $or: [
           { "user.email": { $regex: escapedSearch, $options: "i" } },
           { "user.name": { $regex: escapedSearch, $options: "i" } },
+          { "items.title": { $regex: escapedSearch, $options: "i" } },
           {
             $expr: {
               $regexMatch: {
@@ -152,32 +153,33 @@ export const getAllOrders = asyncHandler(async (req, res) => {
     });
   }
 
-  pipeline.push({
-    $project: {
-      user: 1,
-      items: 1,
-      totalAmount: 1,
-      paymentStatus: 1,
-      fulfillmentStatus: 1,
-      createdAt: 1,
-      updatedAt: 1,
-    },
-  });
+  const countPipeline = [...pipeline, { $count: "count" }];
 
-  pipeline.push(
-    { $sort: { createdAt: -1 } },
+  const dataPipeline = [
+    ...pipeline,
     {
-      $facet: {
-        data: [{ $skip: skip }, { $limit: limitNumber }],
-        total: [{ $count: "count" }],
+      $project: {
+        user: 1,
+        items: 1,
+        totalAmount: 1,
+        paymentStatus: 1,
+        fulfillmentStatus: 1,
+        createdAt: 1,
+        updatedAt: 1,
       },
     },
-  );
+    { $sort: { createdAt: -1 } },
+    { $skip: skip },
+    { $limit: limitNumber },
+  ];
 
-  const result = await Order.aggregate(pipeline);
+  const [dataResult, countResult] = await Promise.all([
+    Order.aggregate(dataPipeline),
+    Order.aggregate(countPipeline),
+  ]);
 
-  const orders = result[0].data;
-  const total = result[0].total[0]?.count || 0;
+  const orders = dataResult;
+  const total = countResult[0]?.count || 0;
 
   res.json({
     data: orders,

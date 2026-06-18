@@ -213,7 +213,7 @@ export default function AdminProducts() {
         </div>
       )}
 
-      <div className="space-y-3">
+      <div className={`space-y-3 transition-opacity duration-300 ${loading ? "opacity-50 pointer-events-none" : ""}`}>
         {products.length === 0 && loading ? (
           Array.from({ length: 5 }).map((_, i) => <AdminRowSkeleton key={i} />)
         ) : products.length === 0 ? (
